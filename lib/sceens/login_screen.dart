@@ -84,6 +84,8 @@ class _LoginScreenState extends State<LoginScreen> {
         return null;
       } else {
         loginformkey.currentState!.save();
+        SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+        sharedPreferences.setInt('typeId', widget.typeid);
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
                 builder: (BuildContext context) =>

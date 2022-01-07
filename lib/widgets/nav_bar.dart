@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:leaf_vine_app/sceens/home_screen.dart';
 import 'package:leaf_vine_app/sceens/login_screen.dart';
+import 'package:leaf_vine_app/sceens/profile_screen.dart';
 
 import '../colors.dart';
 
@@ -49,16 +50,18 @@ class _NavBarState extends State<NavBar> {
         });
   }
 
+  int currentTsb =0;
+  final List<Widget> screens =[
+    HomeScreen(),
+    ProfileScreen(),
+  ];
+
+  final PageStorageBucket bucket = PageStorageBucket();
+  Widget currentScreen = HomeScreen();
+
+
   @override
   Widget build(BuildContext context) {
-    int currentTsb =0;
-    final List<Widget> screens =[
-      HomeScreen(typeid: widget.typeid,),
-    ];
-
-    final PageStorageBucket bucket = PageStorageBucket();
-    Widget currentScreen = HomeScreen(typeid: widget.typeid,);
-
     return Scaffold(
       body: PageStorage(
         child: currentScreen,
@@ -69,7 +72,7 @@ class _NavBarState extends State<NavBar> {
         child: Icon(Icons.home,color: ColorForDesign().white,),
         onPressed: (){
           setState(() {
-            currentScreen = HomeScreen(typeid: widget.typeid,);
+            currentScreen = HomeScreen();
             currentTsb=0;
           });
         },
@@ -113,8 +116,8 @@ class _NavBarState extends State<NavBar> {
                     minWidth: 150,
                     onPressed: (){
                       setState(() {
-                        // currentScreen = ProfileScreen();
-                        // currentTsb=2;
+                        currentScreen = ProfileScreen();
+                        currentTsb=2;
                       });
                     },
                     child: Column(
