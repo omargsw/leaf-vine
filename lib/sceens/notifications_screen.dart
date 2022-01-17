@@ -96,6 +96,7 @@ class _NotificationsState extends State<Notifications> {
                     secondaryActions: <Widget>[
                       InkWell(
                         onTap: () {
+                          FirebaseFirestore.instance.collection('notifications').doc().delete();
                           Navigator.of(context).pop();
                         },
                         child: slideContiner(

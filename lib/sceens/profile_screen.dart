@@ -7,8 +7,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:leaf_vine_app/widgets/actionbattons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:uuid/uuid.dart';
 import '../colors.dart';
+import '../main.dart';
 
 
 class ProfileScreen extends StatefulWidget {
@@ -19,6 +23,12 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  String? email2= sharedPreferences.getString('email');
+  var typeid = sharedPreferences.getInt('typeId');
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  Map<String, dynamic>? userMap;
+
   GlobalKey<FormState> _form= GlobalKey<FormState>();
   GlobalKey<FormState> _form2= GlobalKey<FormState>();
   GlobalKey<FormState> _form3= GlobalKey<FormState>();
@@ -35,37 +45,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
   File ? imageFile;
   final imagePicker = ImagePicker();
   String status = '';
-  String ? name2;
-  String ? phone2;
-  String ? image2;
-  String ? email2;
   String photo = '';
   String imagepath = '';
+  String ? phone;
 
 
-  void setdataimage() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    String? image= sharedPreferences.getString('profile_photo_path');
-    setState(() {
-      image2 = image;
-    });
-
-  }
-
-
-
-  Future chooseImage(ImageSource source) async {
+  Future getImage(ImageSource source) async {
     final pickedFile = await imagePicker.pickImage(source: source);
     setState(() {
       imageFile = File(pickedFile!.path);
       _load = false;
     });
+    uploadImage();
+
   }
 
-  setStatus(String message) {
-    setState(() {
-      status = message;
+  Future uploadImage() async {
+    String fileName = Uuid().v1();
+    int status = 1;
+
+    var ref = FirebaseStorage.instance.ref().child('profileimages').child("$fileName");
+
+    var uploadTask = await ref.putFile(imageFile!).catchError((error) async {
+
+      status = 0;
     });
+
+    if (status == 1) {
+      String imageUrl = await uploadTask.ref.getDownloadURL();
+      _auth.currentUser!.updatePhotoURL('$imageUrl');
+      await _firestore.collection('users').doc(_auth.currentUser!.email).update({
+        "image" : imageUrl,
+      }).then((value) {
+        showFloatingSnackBar(context);
+      }).catchError((e){
+        print("Error is $e");
+      });
+
+      print("Image Url => "+imageUrl);
+    }
   }
 
 
@@ -136,7 +154,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             FlatButton.icon(
               icon: Icon(Icons.image),
               onPressed: () {
-                chooseImage(ImageSource.gallery);
+                getImage(ImageSource.gallery);
                 Navigator.pop(context);
               },
               label: Text("Gallery",style: TextStyle(),),
@@ -146,6 +164,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
+  }
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    setdata();
+    print(_auth.currentUser!.photoURL);
+    print(_auth.currentUser);
+  }
+  void setdata() async {
+    await _firestore.collection('users').where('email',isEqualTo: _auth.currentUser!.email).get().then((value) {
+      setState(() {
+        userMap = value.docs[0].data();
+      });
+      print('=========================');
+      print(userMap);
+      print('=========================');
+      print(_auth.currentUser!.uid);
+
+    });
+    setState(() {
+      fname.text= _auth.currentUser!.displayName!;
+      email.text = _auth.currentUser!.email!;
+      phnum.text = userMap!['phone'];
+    });
   }
 
   @override
@@ -159,7 +202,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: TextStyle(color: ColorForDesign.yellowwhite,),
         ),
         centerTitle: true,
-
+        actions: [
+          TextButton(
+            child: Column(
+              children: [
+                Text("Reset",style: TextStyle(color: ColorForDesign().darkyellow),),
+                Text("Password",style: TextStyle(color: ColorForDesign().darkyellow),),
+              ],
+            ),
+            onPressed: (){
+              _auth.sendPasswordResetEmail(email: email.text);
+            },
+          ),
+        ],
       ),
       body: Container(
         color: ColorForDesign.yellowwhite,
@@ -171,9 +226,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Center(
                   child: Stack(children: <Widget>[
                     imageFile == null ?
-                    ClipOval(
-                      child: Image.asset('assets/img/nouserimage.jpg',
-                      height: 150,),
+                    CircleAvatar(
+                      radius: 80.0,
+                      backgroundImage: NetworkImage('${_auth.currentUser!.photoURL}'),
 
                     ) : CircleAvatar(
                       radius: 80.0,
@@ -262,7 +317,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         keyboardType: TextInputType.name,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(0),
-                          hintText: "Name..",
+                          hintText: "${_auth.currentUser!.displayName}",
                           hintStyle: TextStyle(fontSize: 10,fontFamily: 'Simpletax',fontWeight: FontWeight.bold),
                           fillColor: Colors.white,
                           focusColor: Colors.white,
@@ -291,7 +346,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(0),
-                          hintText: "Phone Number..",
+                          hintText: userMap == null ?"Phone Number.." : "${userMap!['phone']}",
                           hintStyle: TextStyle(fontSize: 10,fontFamily: 'Simpletax',fontWeight: FontWeight.bold),
                           fillColor: Colors.white,
                           focusColor: Colors.white,
@@ -323,8 +378,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(0),
-                          hintText: "Email..",
-                          hintStyle: TextStyle(fontSize: 10,fontFamily: 'Simpletax',fontWeight: FontWeight.bold),
+                          hintText: "${_auth.currentUser!.email!}",
+                          hintStyle: TextStyle(fontSize: 10,fontWeight: FontWeight.bold),
                           fillColor: Colors.white,
                           focusColor: Colors.white,
                           filled: true,
@@ -342,87 +397,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         controller: email,
                       ),
                     ),),
-                    Form(
-                      key: _form4,
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                            ),
-                            child: TextFormField(
-                              keyboardType: TextInputType.visiblePassword,
-                              decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.all(0),
-                                hintText: "Password..",
-                                hintStyle: TextStyle(fontSize: 10,fontFamily: 'Simpletax',fontWeight: FontWeight.bold),
-                                fillColor: Colors.white,
-                                focusColor: Colors.white,
-                                filled: true,
-                                suffixIcon: IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      if (ob == true) {
-                                        ob = false;
-                                        iconpass = Icon(Icons.visibility_off,color: ColorForDesign().broun,);
-                                      } else {
-                                        ob = true;
-                                        iconpass = Icon(Icons.visibility,color: ColorForDesign().broun,);
-                                      }
-                                    });
-                                  },
-                                  icon: iconpass,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                                prefixIcon: Icon(Icons.lock_outline,color: ColorForDesign().broun,),
-                              ),
-
-                              obscureText: ob,
-                              controller: pass,
-                            ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.all(10),
-                            child: TextFormField(
-                              keyboardType: TextInputType.visiblePassword,
-                              decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.all(0),
-                                hintText: "Confirm Password..",
-                                hintStyle: TextStyle(fontSize: 10,fontWeight: FontWeight.bold),
-                                fillColor: Colors.white,
-                                focusColor: Colors.white,
-                                filled: true,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: BorderSide.none,
-                                ),
-                                prefixIcon: Icon(Icons.lock_outline,color: ColorForDesign().broun,),
-                                suffixIcon: IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      if (ob2 == true) {
-                                        ob2 = false;
-                                        iconpass2 = Icon(Icons.visibility_off,color: ColorForDesign().broun,);
-                                      } else {
-                                        ob2 = true;
-                                        iconpass2 = Icon(Icons.visibility,color: ColorForDesign().broun,);
-                                      }
-                                    });
-                                  },
-                                  icon: iconpass2,
-                                ),
-                              ),
-
-                              obscureText: ob2,
-                              controller: pass2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               SizedBox(height: 10,),
@@ -437,8 +411,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       rightsize: 30,
                       fontsize: 15,
                       onClicked: ()async{
-
-
+                        CollectionReference userRef = FirebaseFirestore.instance.collection('users');
+                        final user = FirebaseAuth.instance.currentUser;
+                        var name4=fname.text;
+                        var phone4=phnum.text;
+                        var email4=email.text;
+                        if (_form.currentState!.validate()) {
+                          if (_form3.currentState!.validate()) {
+                            userRef.doc(user!.email).update({
+                              "name" : name4,
+                              "phone" : phone4,
+                              "email" : email4,
+                            }).then((value) {
+                              showFloatingSnackBar(context);
+                            }).catchError((e){
+                              print("Error is $e");
+                            });
+                          }
+                        }
                       },
                     ),
                   ),
