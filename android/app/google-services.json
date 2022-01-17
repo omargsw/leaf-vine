@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1093269459048",
+    "project_id": "leafvine-ff2f1",
+    "storage_bucket": "leafvine-ff2f1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1093269459048:android:6cef92c4be9b213788ebdd",
+        "android_client_info": {
+          "package_name": "com.leafvine.leaf_vine_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1093269459048-bnojs7cf7jlr0516t1c1k7oc62bmff2g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCz9DUKwAWKZrhJCg8xt3LdtlmCViuM3W4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1093269459048-bnojs7cf7jlr0516t1c1k7oc62bmff2g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

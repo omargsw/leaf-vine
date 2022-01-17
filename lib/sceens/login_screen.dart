@@ -1,9 +1,11 @@
 
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:leaf_vine_app/sceens/signup_screen.dart';
 import 'package:leaf_vine_app/widgets/actionbattons.dart';
 import 'package:leaf_vine_app/widgets/nav_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../colors.dart';
 
@@ -17,6 +19,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;
   var loginformkey = GlobalKey<FormState>();
   var signUpformkey = GlobalKey<FormState>();
   bool _passwordVisible = true;
@@ -33,7 +37,6 @@ class _LoginScreenState extends State<LoginScreen> {
   late String signUPpassword;
   late String signUPConfirmPassword;
 
-  bool loginorsignup = true;
   bool checkboxvalue = false;
   var email=TextEditingController();
   var pass=TextEditingController();
@@ -42,6 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
   var num=TextEditingController();
   var loginemail=TextEditingController();
   var loginpass=TextEditingController();
+  var confpass;
 
 
   void _showErrorDialog(String msg) {
@@ -51,11 +55,11 @@ class _LoginScreenState extends State<LoginScreen> {
           return AlertDialog(
             shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(20.0))),
-            backgroundColor: ColorForDesign().liteblue,
+            backgroundColor: ColorForDesign.yellowwhite,
             content: Text(msg,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: ColorForDesign.yellowwhite,
+                style: TextStyle(
+                  color: ColorForDesign().broun,
                 )),
             actions: <Widget>[
               Center(
@@ -70,44 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           );
         });
-  }
-
-  CheckifTheTextBoxEmpty() async {
-    var nametxt = name.text;
-    var emailtxt = email.text;
-    var phonetxt = num.text;
-    var passtxt = pass.text;
-    var lemail = loginemail.text;
-    var lpass = loginpass.text;
-    if (loginorsignup == true) {
-      if (!loginformkey.currentState!.validate()) {
-        return null;
-      } else {
-        loginformkey.currentState!.save();
-        SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-        sharedPreferences.setInt('typeId', widget.typeid);
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-                builder: (BuildContext context) =>
-                    NavBar(typeid: widget.typeid,)),
-                (Route<dynamic> route) => false);
-      }
-    }
-    //-sign Up for Form------------------------
-    else if (!signUpformkey.currentState!.validate()) {
-      return null;
-    } else {
-      signUpformkey.currentState!.save();
-      if (signUPpassword == signUPConfirmPassword) {
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-                builder: (BuildContext context) =>
-                    NavBar(typeid: widget.typeid,)),
-                (Route<dynamic> route) => false);
-      } else {
-        _showErrorDialog("password dosen't match");
-      }
-    }
   }
 
   @override
@@ -142,8 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(fontSize: 25, color: ColorForDesign().broun),
                 ),
               ),
-              loginorsignup
-                  ? Form(
+              Form(
                       key: loginformkey,
                       child: Wrap(
                         runSpacing: 10,
@@ -318,305 +283,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           //-----------end Theme for TextFormFields---------------------
                         ],
                       ),
-                    )
-                  : Form(
-                      key: signUpformkey,
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: TextFormField(
-                              style:
-                                  TextStyle(color: Colors.amber, fontSize: 15),
-                              cursorColor: ColorForDesign().broun,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
-                                prefixIcon: Icon(
-                                  Icons.account_box,
-                                  color: ColorForDesign().broun,
-                                ),
-                                labelText: 'Name',
-                                labelStyle:
-                                    TextStyle(color: ColorForDesign().broun),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: ColorForDesign().broun,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: ColorForDesign().broun,
-                                    width: 2.0,
-                                  ),
-                                ),
-                              ),
-                              controller: name,
-                              validator: (value) {
-                                if (value!.isEmpty) {
-                                  return "required";
-                                }
-                                return null;
-                              },
-                              onSaved: (newvalue) {
-                                signUPName = newvalue!;
-                              },
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: TextFormField(
-                              style: TextStyle(color: Colors.amber, fontSize: 15),
-                              cursorColor: ColorForDesign().broun,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
-                                prefixIcon: Icon(
-                                  Icons.email,
-                                  color: ColorForDesign().broun,
-                                ),
-                                labelText: "Email",
-                                labelStyle:
-                                    TextStyle(color: ColorForDesign().broun),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: ColorForDesign().broun,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: ColorForDesign().broun,
-                                    width: 2.0,
-                                  ),
-                                ),
-                              ),
-                              controller: email,
-                              validator: (value) {
-                                if (value!.isEmpty) {
-                                  return "required";
-                                }
-                                return null;
-                              },
-                              onSaved: (newvalue) {
-                                signUPUserEmail = newvalue!;
-                              },
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: TextFormField(
-                              style:
-                                  TextStyle(color: Colors.amber, fontSize: 15),
-                              cursorColor: ColorForDesign().broun,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
-                                prefixIcon: Icon(
-                                  Icons.phone,
-                                  color: ColorForDesign().broun,
-                                ),
-                                labelText: 'Phone number',
-                                labelStyle: TextStyle(color: ColorForDesign().broun),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: ColorForDesign().broun,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: ColorForDesign().broun,
-                                    width: 2.0,
-                                  ),
-                                ),
-                              ),
-                              controller: num,
-                              validator: (value) {
-                                if (value!.isEmpty) {
-                                  return "required";
-                                }
-                                return null;
-                              },
-                              onSaved: (newvalue) {
-                                signUPphoneNumber = newvalue!;
-                              },
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: TextFormField(
-                              obscureText: _passwordsignupVisible,
-                              style:
-                                  TextStyle(color: Colors.amber, fontSize: 15),
-                              cursorColor: ColorForDesign().broun,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
-                                suffixIcon: IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _passwordsignupVisible =
-                                          !_passwordsignupVisible;
-                                    });
-                                  },
-                                  icon: Icon(
-                                    _passwordsignupVisible
-                                        ? Icons.visibility_sharp
-                                        : Icons.visibility_off,
-                                    color: ColorForDesign().broun,
-                                  ),
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.lock,
-                                  color: ColorForDesign().broun,
-                                ),
-                                labelText: "Password",
-                                labelStyle:
-                                    TextStyle(color: ColorForDesign().broun),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: ColorForDesign().broun,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: ColorForDesign().broun,
-                                    width: 2.0,
-                                  ),
-                                ),
-                              ),
-                              controller: pass,
-                              validator: (value) {
-                                if (value!.isEmpty) {
-                                  return "required";
-                                }
-                                return null;
-                              },
-                              onSaved: (newvalue) {
-                                signUPpassword = newvalue!;
-                              },
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: TextFormField(
-                              obscureText: _passwordsignupconfermVisible,
-                              style:
-                                  TextStyle(color: Colors.amber, fontSize: 15),
-                              cursorColor: ColorForDesign().broun,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
-                                suffixIcon: IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _passwordsignupconfermVisible =
-                                          !_passwordsignupconfermVisible;
-                                    });
-                                  },
-                                  icon: Icon(
-                                    _passwordsignupconfermVisible
-                                        ? Icons.visibility_sharp
-                                        : Icons.visibility_off,
-                                    color: ColorForDesign().broun,
-                                  ),
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.lock_clock_sharp,
-                                  color: ColorForDesign().broun,
-                                ),
-                                labelText: 'Confirm Password',
-                                labelStyle:
-                                    TextStyle(color: ColorForDesign().broun),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: ColorForDesign().broun,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                  borderSide: BorderSide(
-                                    color: ColorForDesign().broun,
-                                    width: 2.0,
-                                  ),
-                                ),
-                              ),
-                              validator: (value) {
-                                if (value!.isEmpty) {
-                                  return "required";
-                                }
-                                return null;
-                              },
-                              onSaved: (newvalue) {
-                                signUPConfirmPassword = newvalue!;
-                              },
-                            ),
-                          )
-                        ],
-                      ),
                     ),
               Container(
                 width: MediaQuery.of(context).size.width,
@@ -627,14 +293,55 @@ class _LoginScreenState extends State<LoginScreen> {
                     Builder(
                       builder: (context) => Center(
                         child: ButtonWidget(
-                          text: loginorsignup ? 'Login' : 'Sign Up',
+                          text: 'Login' ,
                           color: ColorForDesign().litegreen,
                           colortext: ColorForDesign.yellowwhite,
                           leftsize: 40,
                           rightsize: 40,
                           fontsize: 25,
                           onClicked: ()async{
-                            CheckifTheTextBoxEmpty();
+                            var lemail = loginemail.text;
+                            var lpass = loginpass.text;
+                              if (!loginformkey.currentState!.validate()) {
+                                return null;
+                              } else {
+                                loginformkey.currentState!.save();
+                                SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+                                sharedPreferences.setInt('typeId', widget.typeid);
+                                try{
+                                  UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+                                      email: lemail, password: lpass);
+                                  //ConfirmationResult userCredentialphone = await _auth.signInWithPhoneNumber(phone);
+                                  print("Login Sucessfull");
+                                  _firestore.collection('users').doc(_auth.currentUser!.uid).get().
+                                  then((value) => userCredential.user!.updateDisplayName(value['name']));
+                                  User? user = FirebaseAuth.instance.currentUser;
+                                  if (userCredential.user!.emailVerified == false) {
+                                    //await user!.sendEmailVerification();
+                                    _showErrorDialog(
+                                        'You should check your email!');
+                                  }else{
+                                    SharedPreferences sharedPreferences = await SharedPreferences
+                                        .getInstance();
+                                    sharedPreferences.setString(
+                                        'email', lemail);
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                        MaterialPageRoute(
+                                            builder: (BuildContext context) =>
+                                                NavBar()),
+                                            (Route<dynamic> route) => false);
+                                  }
+
+                                }on FirebaseAuthException catch (e) {
+                                  if (e.code == 'user-not-found') {
+                                    CircularProgressIndicator();
+                                    _showErrorDialog('No user found for that email.');
+                                  } else if (e.code == 'wrong-password') {
+                                    _showErrorDialog('The password is incorrect.');
+                                  }
+                                }
+
+                              }
                           },
                         ),
                       ),
@@ -643,8 +350,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Center(
                       child: RichText(
                         text: TextSpan(
-                          text: loginorsignup ? "Don't have account" :
-                          "Do you have account",
+                          text: "Don't have account",
                           style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold,fontSize: 18,),
                         ),
                       ),
@@ -655,16 +361,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         Builder(
                           builder: (context) => Center(
                             child: ButtonWidget(
-                              text: loginorsignup ? 'Sign Up' : 'Login',
+                              text: 'Sign Up',
                               color: ColorForDesign.yellowwhite,
                               colortext: ColorForDesign().broun,
                               leftsize: 20,
                               rightsize: 20,
                               fontsize: 15,
                               onClicked: ()async{
-                                setState(() {
-                                  loginorsignup = !loginorsignup;
-                                });
+                                Navigator.of(context).push(MaterialPageRoute(builder: (context) => SignUpScreen(typeid: widget.typeid,text: widget.text,)),);
                               },
                             ),
                           ),

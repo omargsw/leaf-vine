@@ -2,14 +2,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:leaf_vine_app/sceens/home_screen.dart';
 import 'package:leaf_vine_app/sceens/login_screen.dart';
+import 'package:leaf_vine_app/sceens/myorders.dart';
+import 'package:leaf_vine_app/sceens/notifications_screen.dart';
 import 'package:leaf_vine_app/sceens/profile_screen.dart';
 
 import '../colors.dart';
 
 
 class NavBar extends StatefulWidget {
-  int typeid;
-  NavBar({Key? key,required this.typeid}) : super(key: key);
+  NavBar({Key? key}) : super(key: key);
 
   @override
   _NavBarState createState() => _NavBarState();
@@ -54,6 +55,7 @@ class _NavBarState extends State<NavBar> {
   final List<Widget> screens =[
     HomeScreen(),
     ProfileScreen(),
+    MyOrders(),
   ];
 
   final PageStorageBucket bucket = PageStorageBucket();
@@ -93,10 +95,9 @@ class _NavBarState extends State<NavBar> {
                     minWidth: 150,
                     onPressed: (){
                       setState(() {
-                        // currentScreen = Notifications();
-                        // currentTsb=1;
+                        currentScreen = MyOrders();
+                        currentTsb=1;
                       });
-                      print(widget.typeid);
                     },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,

@@ -1,15 +1,23 @@
 // ignore_for_file: prefer_const_constructors, non_constant_identifier_names, import_of_legacy_library_into_null_safe
 // ignore_for_file: prefer_const_literals_to_create_immutables
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:leaf_vine_app/colors.dart';
+import 'package:leaf_vine_app/sceens/notifications_screen.dart';
 import 'package:leaf_vine_app/sceens/welcome_page.dart';
 import 'package:leaf_vine_app/widgets/actionbattons.dart';
 import '../main.dart';
+import 'location_screen.dart';
 import 'login_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -20,6 +28,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+   FirebaseAuth _auth = FirebaseAuth.instance;
+   FirebaseFirestore _firestore = FirebaseFirestore.instance;
   var typeid = sharedPreferences.getInt('typeId');
   final GlobalKey<FormState> _form = GlobalKey<FormState>();
 
@@ -29,74 +39,144 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
   bool language = false;
+  bool isappro = false;
   bool _load = false;
   File ? imageFile;
   // final imagePicker = ImagePicker();
   String status = '';
   String photo = '';
   String imagepath = '';
+   Map<String, dynamic>? userMap;
 
+   var serverToken = "AAAA_ovwEGg:APA91bHulERonfgoLsxJrdzF6KYdRPWEd19TaJTHio_RaVrOjxJlGbrn"
+       "_QA_KuBlkD3DkCzjaPkz5nk4nOouht2p3fIkh79z4DqUYrgVxMCyofL8VA36dGzn5Xqsr0tA0TtzPj-f0OmV";
 
-  // Future Uploadimage() async {
-  //   if (imageFile == null ) return ;
-  //   photo = base64Encode(imageFile!.readAsBytesSync());
-  //   imagepath = imageFile!.path.split("/").last;
-  // }
-  // Future chooseImage(ImageSource source) async {
-  //   final pickedFile = await imagePicker.pickImage(source: source);
-  //   setState(() {
-  //     imageFile = File(pickedFile!.path);
-  //     _load = false;
-  //   });
-  // }
-  // setStatus(String message) {
-  //   setState(() {
-  //     status = message;
-  //   });
-  // }
+   sendNotify(int id , String title,String body,String uid) async {
+     await http.post(
+       Uri.parse('https://fcm.googleapis.com/fcm/send'),
+       headers: <String, String>{
+         'Content-Type': 'application/json',
+         'Authorization': 'key=$serverToken',
+       },
+       body: jsonEncode(
+         <String, dynamic>{
+           'notification': <String, dynamic>{
+             'body': body.toString(),
+             'title': title.toString(),
+           },
+           'priority': 'high',
+           'data': <String, dynamic>{
+             'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+             'id': id,
+             'status': 'done'
+           },
+           //الى من رح توصل الرساله
 
-  Widget bottomSheet() {
+           'to': '/topics/$uid'
+         },
+       ),
+     );
+   }
+
+  Widget bottomSheet(var name,var email,var phone,var cost) {
     return Container(
-      height: 100.0,
+      height: 200.0,
       width: MediaQuery.of(context).size.width,
       margin: EdgeInsets.symmetric(
         horizontal: 20,
         vertical: 20,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            "chooseimage",
-            style: TextStyle(
-              fontSize: 20.0,
-              color: ColorForDesign().broun,
+          Center(
+            child: Text(
+              "Client Informations",
+              style: TextStyle(
+                fontSize: 20.0,
+                color: ColorForDesign().broun,
+              ),
             ),
           ),
           SizedBox(
             height: 3,
           ),
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-            FlatButton.icon(
-              icon: Icon(Icons.image,color: ColorForDesign().broun,),
-              onPressed: () {
-                // chooseImage(ImageSource.gallery);
-                Navigator.pop(context);
-              },
-              label: Text("gallery",style: TextStyle(color: ColorForDesign().broun,
-              ),),
+          Container(
+            child: Wrap(
+              children: [
+               Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                   RichText(
+                     text: TextSpan(
+                       text: 'Name : $name',
+                       style: TextStyle(
+                           fontFamily: 'Simpletax',
+                           fontSize: 18.0,
+                           color: Colors.black45),),),
+                   SizedBox(height: 5,),
+                   RichText(
+                     text: TextSpan(
+                       text: 'Email : $email',
+                       style: TextStyle(
+                           fontFamily: 'Simpletax',
+                           fontSize: 18.0,
+                           color: Colors.black45),),),
+                   SizedBox(height: 5,),
+                   RichText(
+                     text: TextSpan(
+                       text: 'Phone Number : $phone',
+                       style: TextStyle(
+                           fontFamily: 'Simpletax',
+                           fontSize: 18.0,
+                           color: Colors.black45),),),
+                   SizedBox(height: 5,),
+                   RichText(
+                     text: TextSpan(
+                       text: 'Cost of delivery : $cost',
+                       style: TextStyle(
+                           fontFamily: 'Simpletax',
+                           fontSize: 18.0,
+                           color: Colors.black45),),),
+                   SizedBox(height: 10,),
+                   Center(
+                     child: Builder(
+                     builder: (context) => Center(
+                       child: ButtonWidget(
+                         text: "Approve",
+                         color: ColorForDesign().litegreen,
+                         colortext:
+                         ColorForDesign.yellowwhite,
+                         leftsize: 5,
+                         rightsize: 5,
+                         fontsize: 15,
+                         onClicked: () async {
+                           var title = _auth.currentUser!.displayName;
+                           var body = "Approve for your order";
+                           sendNotify(1, title!, body, _auth.currentUser!.uid);
+                           await _firestore.collection('notifications').doc().set({
+                             "title": title,
+                             "body": body,
+                             "myname": _auth.currentUser!.displayName,
+                             "myemail" : _auth.currentUser!.email,
+                             "userid" : _auth.currentUser!.uid,
+                             "myimage" : _auth.currentUser!.photoURL,
+                             "sendtoemail" : email,
+                             "sendtoname" : name,
+                             "time": FieldValue.serverTimestamp(),
+                           });
 
+                           //Navigator.of(context).push(MaterialPageRoute(builder: (context) => LocationScreen()),);
+                         },
+                       ),
+                     ),
+                   ),
+                   )
+                 ],
+               )
+              ],
             ),
-            FlatButton.icon(
-              icon: Icon(Icons.camera_alt,color: ColorForDesign().broun,),
-              onPressed: () {
-                // chooseImage(ImageSource.camera);
-                Navigator.pop(context);
-
-              },
-              label: Text("camera",style: TextStyle(color: ColorForDesign().broun,),),
-
-            ),
-          ])
+          )
         ],
       ),
     );
@@ -110,6 +190,61 @@ class _HomeScreenState extends State<HomeScreen> {
     // TODO: implement initState
     super.initState();
     print(typeid);
+    _firestore.collection('users').where('email',isEqualTo: _auth.currentUser!.email).get().then((value) {
+      setState(() {
+        userMap = value.docs[0].data();
+      });
+      print('=========================');
+      print(userMap);
+      print('=========================');
+
+    });
+    //from firebase**********************************
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
+      if (notification != null && android != null) {
+        flutterLocalNotificationsPlugin.show(
+            notification.hashCode,
+            notification.title,
+            notification.body,
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                channel.id,
+                channel.name,
+                color: Colors.blue,
+                playSound: true,
+                icon: "@mipmap/logo",
+              ),
+            ));
+      }
+    });
+//when i click notify **************************************************
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('A new onMessageOpenedApp event was published!');
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
+      if (notification != null && android != null) {
+        showDialog(
+            context: context,
+            builder: (_) {
+              return AlertDialog(
+                title: Text(notification.title.toString()),
+                content: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [Text(notification.body.toString())],
+                  ),
+                ),
+              );
+            });
+      }
+    });
+
+
+    FirebaseMessaging.instance.subscribeToTopic("${_auth.currentUser!.uid}");
+
+
   }
   void showFloatingSnackBar(BuildContext context) {
     final snackBar = SnackBar(
@@ -202,7 +337,33 @@ class _HomeScreenState extends State<HomeScreen> {
                           rightsize: 5,
                           fontsize: 15,
                           onClicked: () async {
-                            print(typeid);
+                            await _firestore.collection('orders').doc().set({
+                              "title": title.text,
+                              "desc": desc.text,
+                              "myname": _auth.currentUser!.displayName,
+                              "myemail" : _auth.currentUser!.email,
+                              "myimage" : _auth.currentUser!.photoURL,
+                              "myphone" : userMap!['phone'],
+                              "time": FieldValue.serverTimestamp(),
+                            });
+                            var titlen = 'Order added';
+                            var body = "${_auth.currentUser!.displayName} added order";
+                            sendNotify(1, titlen, body, _auth.currentUser!.uid);
+                            await _firestore.collection('notifications').doc().set({
+                              "title": titlen,
+                              "body": body,
+                              "myname": _auth.currentUser!.displayName,
+                              "myemail" : _auth.currentUser!.email,
+                              "userid" : _auth.currentUser!.uid,
+                              "myimage" : _auth.currentUser!.photoURL,
+                              "sendtoemail" : 'all users',
+                              "sendtoname" : 'all users',
+                              "time": FieldValue.serverTimestamp(),
+                            });
+                            title.clear();
+                            desc.clear();
+                            Navigator.of(context).pop();
+
 
                           },
                         ),
@@ -216,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showErrorDialog() {
+  void _showErrorDialog(var name,var email,var phone,var cost) {
     showDialog<String>(
         context: context,
         builder: (BuildContext context) {
@@ -224,28 +385,107 @@ class _HomeScreenState extends State<HomeScreen> {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(20.0))),
             backgroundColor: ColorForDesign().broun,
-            content: Text("You must login",
+            content: Text("Client Info",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: ColorForDesign.yellowwhite,
                 )),
             actions: <Widget>[
-              Center(
-                child: TextButton(
-                  onPressed: (){
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => LoginScreen(typeid: 0,)),);
-                  },
-                  child: Text('Login',
-                      style: TextStyle(
-                        color: ColorForDesign.yellowwhite,
-                      )),
-                ),
+             Container(
+              height: 200.0,
+              width: MediaQuery.of(context).size.width,
+              margin: EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 20,
               ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Center(
+                    child: Text(
+                      "Client Informations",
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color: ColorForDesign().broun,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 3,
+                  ),
+                  Container(
+                    child: Wrap(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                text: 'Name : $name',
+                                style: TextStyle(
+                                    fontFamily: 'Simpletax',
+                                    fontSize: 18.0,
+                                    color: Colors.black45),),),
+                            SizedBox(height: 5,),
+                            RichText(
+                              text: TextSpan(
+                                text: 'Email : $email',
+                                style: TextStyle(
+                                    fontFamily: 'Simpletax',
+                                    fontSize: 18.0,
+                                    color: Colors.black45),),),
+                            SizedBox(height: 5,),
+                            RichText(
+                              text: TextSpan(
+                                text: 'Phone Number : $phone',
+                                style: TextStyle(
+                                    fontFamily: 'Simpletax',
+                                    fontSize: 18.0,
+                                    color: Colors.black45),),),
+                            SizedBox(height: 5,),
+                            RichText(
+                              text: TextSpan(
+                                text: 'Const of delivery : $cost',
+                                style: TextStyle(
+                                    fontFamily: 'Simpletax',
+                                    fontSize: 18.0,
+                                    color: Colors.black45),),),
+                            SizedBox(height: 10,),
+                            Center(
+                              child: Builder(
+                                builder: (context) => Center(
+                                  child: ButtonWidget(
+                                    text: "Approve",
+                                    color: ColorForDesign().litegreen,
+                                    colortext:
+                                    ColorForDesign.yellowwhite,
+                                    leftsize: 5,
+                                    rightsize: 5,
+                                    fontsize: 15,
+                                    onClicked: () async {
+                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => LocationScreen()),);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            )
+                          ],
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            )
             ],
           );
         });
   }
+
+
+
+  final Stream<QuerySnapshot> _usersStream = FirebaseFirestore.instance.collection('orders').snapshots();
+  final Stream<QuerySnapshot> _newsStream = FirebaseFirestore.instance.collection('news').snapshots();
 
   @override
   Widget build(BuildContext context) {
@@ -269,10 +509,13 @@ class _HomeScreenState extends State<HomeScreen> {
           actions: [
             IconButton(
                 onPressed: () {
-                  _AddProduct(context);
+                  Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (BuildContext context) =>
+                              Notifications()),);
                 },
                 icon: Icon(
-                  Icons.add,
+                  Icons.notifications,
                   color: ColorForDesign.yellowwhite,
                 )),
             IconButton(
@@ -295,112 +538,240 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           backgroundColor: ColorForDesign().broun,
         ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            _AddProduct(context);
+          },
+          backgroundColor: ColorForDesign().broun,
+          child: const Icon(Icons.add),
+        ),
         body: Container(
-          color: ColorForDesign.yellowwhite,
-          height: MediaQuery.of(context).size.height,
-          child: Stack(
+          child: Column(
             children: [
               Container(
                 color: ColorForDesign.yellowwhite,
-                width: double.infinity,
-                height: double.infinity,
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 2 / 2,
-                  ),
-                  itemBuilder: (_, index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                        padding: const EdgeInsets.only(left: 15, top: 10),
+                        child: RichText(
+                            text: TextSpan(
+                                text: 'News',
+                                style: TextStyle(
+                                  color: ColorForDesign().litegreen,
+                                  fontSize: 4.5 *
+                                      (MediaQuery.of(context).size.height / 100),
+                                )))),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(5, 0, 20, 10),
                       child: Container(
-                        decoration: const BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(16.0)),
-                          boxShadow: <BoxShadow>[
-                            BoxShadow(
-                              color: Colors.grey,
-                              // offset: const Offset(3, 3),
-                              blurRadius: 16,
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(16.0)),
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  color: ColorForDesign.yellowwhite,
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 5),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            ClipOval(
-                                              child: Image.asset(
-                                                'assets/img/logo.jpeg',
-                                                width: 40,
-                                                height: 40,
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 10),
-                                              child: RichText(
-                                                text: TextSpan(
-                                                  text: 'Name of user',
-                                                  style: TextStyle(
-                                                    color: Colors.black26,
-                                                    fontSize: 12.0,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Center(
-                                        child: RichText(
-                                          text: TextSpan(
-                                            text: 'title',
-                                            style: TextStyle(
-                                                color: ColorForDesign().broun,
-                                                fontSize: 25.0,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      ),
-                                      Center(
-                                        child: RichText(
-                                          text: TextSpan(
-                                            text: 'desc',
-                                            style: TextStyle(
-                                                color: ColorForDesign().broun,
-                                                fontSize: 20.0),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                        height: 125,
+                        child: StreamBuilder<QuerySnapshot>(
+                          stream: _newsStream,
+                          builder: (context, snapshot) {
+                            if(snapshot.connectionState == ConnectionState.waiting){
+                              return Container(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: const [
+                                    Center(
+                                      child: CircularProgressIndicator(),
+                                    )
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
+                              );
+                            }else{
+                              final docs = snapshot.data!.docs;
+                              return ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.only(left: 16,right: 6),
+                                itemBuilder: (context, index){
+                                  return Container(
+                                    margin: EdgeInsets.only(right: 5),
+                                    height: 200,
+                                    width: MediaQuery.of(context).size.width*0.7,
+                                    child: Card(
+                                      color: ColorForDesign().broun,
+                                      shadowColor: ColorForDesign().broun,
+                                      elevation: 3.0,
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Padding(padding: const EdgeInsets.only(left: 40,top: 30),
+                                                child: RichText(
+                                                  text: TextSpan(
+                                                    text: docs[index]['title'],
+                                                    style: const TextStyle(color: ColorForDesign.yellowwhite,
+                                                        fontSize: 24.0,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontFamily: 'Simpletax'),),),),
+                                              const Padding(
+                                                padding: EdgeInsets.only(left: 40,top: 10),
+                                                child: Icon(Icons.announcement, color: Colors.white,
+                                                ),),
+
+                                            ],
+                                          ),
+
+                                          Padding(padding: const EdgeInsets.only(left: 50,top: 10),
+                                            child: RichText(
+                                              text: TextSpan(
+                                                text: "Price per kilo : ${docs[index]['k']}",
+                                                style: const TextStyle(color: ColorForDesign.yellowwhite,
+                                                    fontSize: 18.0,
+                                                    fontFamily: 'Simpletax'),),),),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                itemCount: docs.length, );
+                            }
+                          },
                         ),
                       ),
-                    );
-                  },
-                  itemCount: 5,
+                    ),
+                    Padding(
+                        padding: const EdgeInsets.only(left: 15, top: 10),
+                        child: RichText(
+                            text: TextSpan(
+                                text: 'Orders',
+                                style: TextStyle(
+                                  color: ColorForDesign().litegreen,
+                                  fontSize: 4.5 *
+                                      (MediaQuery.of(context).size.height / 100),
+                                )))),
+                  ],
                 ),
               ),
+              Expanded(child: Container(
+                color: ColorForDesign.yellowwhite,
+                height: MediaQuery.of(context).size.height,
+                child: Stack(
+                  children: [
+                    Container(
+                      color: ColorForDesign.yellowwhite,
+                      width: double.infinity,
+                      height: double.infinity,
+                      child: StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance.collection('orders').
+                        where("myemail", isNotEqualTo: '${_auth.currentUser!.email}').snapshots(),
+                        builder: (context, snapshot) {
+                          if(snapshot.connectionState == ConnectionState.waiting){
+                            return Container(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: const [
+                                  Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                ],
+                              ),
+                            );
+                          }else{
+                            final docs = snapshot.data!.docs;
+                            return GridView.builder(
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 2 / 2,
+                              ),
+                              itemBuilder: (_, index) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      borderRadius: BorderRadius.all(Radius.circular(16.0)),
+                                      boxShadow: <BoxShadow>[
+                                        BoxShadow(
+                                          color: Colors.grey,
+                                          // offset: const Offset(3, 3),
+                                          blurRadius: 16,
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius:
+                                      const BorderRadius.all(Radius.circular(16.0)),
+                                      child: Column(
+                                        children: [
+                                          Expanded(
+                                            child: Container(
+                                              color: ColorForDesign.yellowwhite,
+                                              child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: <Widget>[
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(top: 5),
+                                                    child: Row(
+                                                      mainAxisAlignment: MainAxisAlignment.start,
+                                                      children: [
+                                                        Padding(padding: const EdgeInsets.fromLTRB(10, 5, 0, 5),
+                                                        child: ClipOval(
+                                                          child: Image.network('${docs[index]['myimage']}',height: 40,),
+                                                        ),),
+                                                        Padding(
+                                                          padding: const EdgeInsets.only(left: 10),
+                                                          child: RichText(
+                                                            text: TextSpan(
+                                                              text: docs[index]['myname'],
+                                                              style: TextStyle(
+                                                                color: Colors.black26,
+                                                                fontSize: 12.0,
+                                                                fontWeight: FontWeight.bold,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  Center(
+                                                    child: RichText(
+                                                      text: TextSpan(
+                                                        text: docs[index]['title'],
+                                                        style: TextStyle(
+                                                            color: ColorForDesign().broun,
+                                                            fontSize: 20.0,
+                                                            fontWeight: FontWeight.bold),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Center(
+                                                    child: RichText(
+                                                      text: TextSpan(
+                                                        text: docs[index]['desc'],
+                                                        style: TextStyle(
+                                                            color: ColorForDesign().broun,
+                                                            fontSize: 15.0),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              itemCount: docs.length,
+                            );
+                          }
+                        },
+                      )
+                    ),
+                  ],
+                ),
+              ),),
             ],
           ),
         ),
@@ -424,6 +795,17 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           actions: [
             IconButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (BuildContext context) =>
+                            Notifications()),);
+                },
+                icon: Icon(
+                  Icons.notifications,
+                  color: ColorForDesign.yellowwhite,
+                )),
+            IconButton(
                 onPressed: () async {
                   Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
@@ -435,6 +817,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Icons.logout,
                   color: ColorForDesign.yellowwhite,
                 )),
+
           ],
           centerTitle: true,
           title: Text(
@@ -444,103 +827,36 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: ColorForDesign().broun,
         ),
         body: Container(
-          child: Column(
+          color: ColorForDesign.yellowwhite,
+          height: MediaQuery.of(context).size.height,
+          child: Stack(
             children: [
               Container(
                 color: ColorForDesign.yellowwhite,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                        padding: const EdgeInsets.only(left: 15, top: 10),
-                        child: RichText(
-                            text: TextSpan(
-                                text: 'News',
-                                style: TextStyle(
-                                    color: ColorForDesign().litegreen,
-                                    fontSize: 4.5 *
-                                        (MediaQuery.of(context).size.height / 100),
-                                )))),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(5, 0, 20, 10),
-                      child: Container(
-                        height: 125,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.only(left: 16,right: 6),
-                          itemBuilder: (context, index){
-                              return Container(
-                                margin: EdgeInsets.only(right: 5),
-                                height: 200,
-                                width: MediaQuery.of(context).size.width*0.7,
-                                child: Card(
-                                  color: ColorForDesign().broun,
-                                  shadowColor: ColorForDesign().broun,
-                                  elevation: 3.0,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Padding(padding: const EdgeInsets.only(left: 40,top: 30),
-                                            child: RichText(
-                                              text: TextSpan(
-                                                text: 'title',
-                                                style: const TextStyle(color: Colors.black,
-                                                    fontSize: 24.0,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontFamily: 'Simpletax'),),),),
-                                          const Padding(
-                                            padding: EdgeInsets.only(left: 40,top: 10),
-                                            child: Icon(Icons.announcement, color: Colors.white,
-                                            ),),
-
-                                        ],
-                                      ),
-
-                                      Padding(padding: const EdgeInsets.only(left: 30,top: 10),
-                                        child: RichText(
-                                          text: TextSpan(
-                                            text: 'text',
-                                            style: const TextStyle(color: Colors.black54,
-                                                fontSize: 18.0,
-                                                fontFamily: 'Simpletax'),),),),
-                                    ],
-                                  ),
-                                ),
-                              );
-                          },
-                          itemCount: 3, ),
-                      ),
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.only(left: 15, top: 10),
-                        child: RichText(
-                            text: TextSpan(
-                                text: 'Orders',
-                                style: TextStyle(
-                                  color: ColorForDesign().litegreen,
-                                  fontSize: 4.5 *
-                                      (MediaQuery.of(context).size.height / 100),
-                                )))),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Container(
-                color: ColorForDesign.yellowwhite,
-                height: MediaQuery.of(context).size.height,
-                child: Stack(
-                  children: [
-                    Container(
-                      color: ColorForDesign.yellowwhite,
-                      width: double.infinity,
-                      height: double.infinity,
-                      child: GridView.builder(
+                width: double.infinity,
+                height: double.infinity,
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('orders').
+                  where("myemail", isNotEqualTo: '${_auth.currentUser!.email}').snapshots(),
+                  builder: (context, snapshot) {
+                    if(snapshot.connectionState == ConnectionState.waiting){
+                      return Container(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: const [
+                            Center(
+                              child: CircularProgressIndicator(),
+                            )
+                          ],
+                        ),
+                      );
+                    }else{
+                      final docs = snapshot.data!.docs;
+                      return GridView.builder(
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          childAspectRatio: 2 / 2,
+                          childAspectRatio: 2 / 2.1,
                         ),
                         itemBuilder: (_, index) {
                           return Padding(
@@ -565,30 +881,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                       child: Container(
                                         color: ColorForDesign.yellowwhite,
                                         child: Column(
-                                          mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: <Widget>[
                                             Padding(
                                               padding: const EdgeInsets.only(top: 5),
                                               child: Row(
-                                                mainAxisAlignment:
-                                                MainAxisAlignment.center,
+                                                mainAxisAlignment: MainAxisAlignment.start,
                                                 children: [
-                                                  ClipOval(
-                                                    child: Image.asset(
-                                                      'assets/img/logo.jpeg',
-                                                      width: 40,
-                                                      height: 40,
-                                                    ),
-                                                  ),
+                                                  Padding(padding: const EdgeInsets.fromLTRB(10, 5, 0, 5),
+                                                    child: ClipOval(
+                                                      child: Image.network('${docs[index]['myimage']}',height: 40,),
+                                                    ),),
                                                   Padding(
-                                                    padding: const EdgeInsets.only(
-                                                        left: 10),
+                                                    padding: const EdgeInsets.only(left: 10),
                                                     child: RichText(
                                                       text: TextSpan(
-                                                        text: 'Name of user',
+                                                        text: docs[index]['myname'],
                                                         style: TextStyle(
                                                           color: Colors.black26,
                                                           fontSize: 12.0,
@@ -603,10 +912,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                             Center(
                                               child: RichText(
                                                 text: TextSpan(
-                                                  text: 'title',
+                                                  text: docs[index]['title'],
                                                   style: TextStyle(
                                                       color: ColorForDesign().broun,
-                                                      fontSize: 25.0,
+                                                      fontSize: 20.0,
                                                       fontWeight: FontWeight.bold),
                                                 ),
                                               ),
@@ -614,13 +923,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                             Center(
                                               child: RichText(
                                                 text: TextSpan(
-                                                  text: 'desc',
+                                                  text: docs[index]['desc'],
                                                   style: TextStyle(
                                                       color: ColorForDesign().broun,
-                                                      fontSize: 20.0),
+                                                      fontSize: 15.0),
                                                 ),
                                               ),
                                             ),
+                                            Spacer(),
                                             Builder(
                                               builder: (context) => Center(
                                                 child: ButtonWidget(
@@ -633,6 +943,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   fontsize: 15,
                                                   onClicked: () async {
                                                     print(typeid);
+                                                    showModalBottomSheet(
+                                                      context: context,
+                                                      builder: ((builder) => bottomSheet(docs[index]['myname'], docs[index]['myemail'],
+                                                          docs[index]['myphone'], '2.00 JD')),
+
+                                                    );
                                                     // setState(() {
                                                     //   if (id == null){
                                                     //     _showErrorDialog();
@@ -659,12 +975,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           );
                         },
-                        itemCount: 5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                        itemCount: docs.length,
+                      );
+                    }
+                  },
+                )
+
               ),
             ],
           ),
@@ -672,5 +988,25 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
   }
+   Row buildNotificationOptionRow(String title, bool isActive) {
+     return Row(
+       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+       children: [
+         Text(
+           title,
+           style: TextStyle(
+               fontSize: 18,
+               fontWeight: FontWeight.w500,
+               color: Colors.grey[600]),
+         ),
+         Transform.scale(
+             scale: 0.7,
+             child: CupertinoSwitch(
+               value: isActive,
+               onChanged: (bool val) {},
+             ))
+       ],
+     );
+   }
 
 }
