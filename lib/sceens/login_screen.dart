@@ -319,7 +319,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   if (userCredential.user!.emailVerified == false) {
                                     //await user!.sendEmailVerification();
                                     _showErrorDialog(
-                                        'You should check your email!');
+                                        'You have to check your email..!');
                                   }else{
                                     SharedPreferences sharedPreferences = await SharedPreferences
                                         .getInstance();

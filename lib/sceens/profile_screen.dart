@@ -68,79 +68,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  // Future updateName(int id, var name) async {
-  //   String url = 'https://www.tabadul.co/tabadulApi/tabadulApi/updatename.php';
-  //   final response = await http.post(Uri.parse(url),
-  //       body: {"id": id.toString(), "name": name});
-  //
-  //   print('UPDATE-NAME------>' + response.body);
-  // }
-  //
-  // Future updatePhone(int id, var phone) async {
-  //   String url = 'https://www.tabadul.co/tabadulApi/tabadulApi/updatephone.php';
-  //   final response = await http.post(Uri.parse(url),
-  //       body: {"id": id.toString(), "phone": phone});
-  //
-  //   print('UPDATE-PHONE------>' + response.body);
-  // }
-  //
-  // Future updateImage(int id, var image,var profileDecoded) async {
-  //   String url = 'https://www.tabadul.co/tabadulApi/tabadulApi/updateimage.php';
-  //   final response = await http.post(Uri.parse(url),
-  //       body: {"id": id.toString(), "profile_photo_path": image,"profileDecoded": profileDecoded});
-  //
-  //   print('UPDATE-IMAGE------>' + response.body);
-  // }
-  // Future updateEmail(int id, var email) async {
-  //   String url = 'https://www.tabadul.co/tabadulApi/tabadulApi/updateemail.php';
-  //   final response = await http.post(Uri.parse(url),
-  //       body: {"id": id.toString(), "email": email});
-  //
-  //   print('UPDATE-EMAIL------>' + response.body);
-  // }
-  // Future updatePassword(int id, var password) async {
-  //   String url = 'https://www.tabadul.co/tabadulApi/tabadulApi/updatepassword.php';
-  //   final response = await http.post(Uri.parse(url),
-  //       body: {"id": id.toString(), "password": password});
-  //
-  //   print('UPDATE-PASSWORD------>' + response.body);
-  // }
-  //
-  // void setdataName() async {
-  //   SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-  //   String? name= sharedPreferences.getString('name');
-  //   setState(() {
-  //     name2 = name;
-  //     fname.text= name2!;
-  //   });
-  // }
-  //
-  // void setdataphone() async {
-  //   SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-  //   String? phone= sharedPreferences.getString('phone');
-  //   setState(() {
-  //     phone2 = phone;
-  //     phnum.text = phone2!;
-  //   });
-  // }
-  //
-  // void setdataemail() async {
-  //   SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-  //   String? mail= sharedPreferences.getString('email');
-  //   setState(() {
-  //     email2 = mail;
-  //     email.text = email2!;
-  //   });
-  // }
-  //
-  // void initState() {
-  //   // TODO: implement initState
-  //   super.initState();
-  //   setdataName();
-  //   setdataphone();
-  //   setdataimage();
-  //   setdataemail();
-  // }
 
   void showFloatingSnackBar(BuildContext context) {
     final snackBar = SnackBar(
@@ -226,6 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0.2,
+        leading: Text(''),
         backgroundColor: ColorForDesign().broun,
         title:  Text("Edit Profile",
           style: TextStyle(color: ColorForDesign.yellowwhite,),

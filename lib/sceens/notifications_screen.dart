@@ -61,6 +61,7 @@ class _NotificationsState extends State<Notifications> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0.2,
+        iconTheme: IconThemeData(color: ColorForDesign.yellowwhite),
         backgroundColor: ColorForDesign().broun,
         title:  Text("Notifications",
           style: TextStyle(color: ColorForDesign.yellowwhite,),

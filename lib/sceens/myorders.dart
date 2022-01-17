@@ -23,6 +23,7 @@ class _MyOrdersState extends State<MyOrders> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0.2,
+        leading: Text(''),
         backgroundColor: ColorForDesign().broun,
         title:  const Text("My Orders",
           style: TextStyle(color: ColorForDesign.yellowwhite,),

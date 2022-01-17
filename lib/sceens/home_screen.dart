@@ -2,7 +2,6 @@
 // ignore_for_file: prefer_const_literals_to_create_immutables
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,13 +10,13 @@ import 'package:leaf_vine_app/sceens/notifications_screen.dart';
 import 'package:leaf_vine_app/sceens/welcome_page.dart';
 import 'package:leaf_vine_app/widgets/actionbattons.dart';
 import '../main.dart';
-import 'location_screen.dart';
-import 'login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+
+import 'order_request.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -28,24 +27,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-   FirebaseAuth _auth = FirebaseAuth.instance;
-   FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   var typeid = sharedPreferences.getInt('typeId');
   final GlobalKey<FormState> _form = GlobalKey<FormState>();
 
   TextEditingController title = TextEditingController();
   TextEditingController desc = TextEditingController();
 
-
-
-  bool language = false;
-  bool isappro = false;
-  bool _load = false;
-  File ? imageFile;
-  // final imagePicker = ImagePicker();
-  String status = '';
-  String photo = '';
-  String imagepath = '';
    Map<String, dynamic>? userMap;
 
    var serverToken = "AAAA_ovwEGg:APA91bHulERonfgoLsxJrdzF6KYdRPWEd19TaJTHio_RaVrOjxJlGbrn"
@@ -77,112 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
        ),
      );
    }
-
-  Widget bottomSheet(var name,var email,var phone,var cost) {
-    return Container(
-      height: 200.0,
-      width: MediaQuery.of(context).size.width,
-      margin: EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 20,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Center(
-            child: Text(
-              "Client Informations",
-              style: TextStyle(
-                fontSize: 20.0,
-                color: ColorForDesign().broun,
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 3,
-          ),
-          Container(
-            child: Wrap(
-              children: [
-               Column(
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                   RichText(
-                     text: TextSpan(
-                       text: 'Name : $name',
-                       style: TextStyle(
-                           fontFamily: 'Simpletax',
-                           fontSize: 18.0,
-                           color: Colors.black45),),),
-                   SizedBox(height: 5,),
-                   RichText(
-                     text: TextSpan(
-                       text: 'Email : $email',
-                       style: TextStyle(
-                           fontFamily: 'Simpletax',
-                           fontSize: 18.0,
-                           color: Colors.black45),),),
-                   SizedBox(height: 5,),
-                   RichText(
-                     text: TextSpan(
-                       text: 'Phone Number : $phone',
-                       style: TextStyle(
-                           fontFamily: 'Simpletax',
-                           fontSize: 18.0,
-                           color: Colors.black45),),),
-                   SizedBox(height: 5,),
-                   RichText(
-                     text: TextSpan(
-                       text: 'Cost of delivery : $cost',
-                       style: TextStyle(
-                           fontFamily: 'Simpletax',
-                           fontSize: 18.0,
-                           color: Colors.black45),),),
-                   SizedBox(height: 10,),
-                   Center(
-                     child: Builder(
-                     builder: (context) => Center(
-                       child: ButtonWidget(
-                         text: "Approve",
-                         color: ColorForDesign().litegreen,
-                         colortext:
-                         ColorForDesign.yellowwhite,
-                         leftsize: 5,
-                         rightsize: 5,
-                         fontsize: 15,
-                         onClicked: () async {
-                           var title = _auth.currentUser!.displayName;
-                           var body = "Approve for your order";
-                           sendNotify(1, title!, body, _auth.currentUser!.uid);
-                           await _firestore.collection('notifications').doc().set({
-                             "title": title,
-                             "body": body,
-                             "myname": _auth.currentUser!.displayName,
-                             "myemail" : _auth.currentUser!.email,
-                             "userid" : _auth.currentUser!.uid,
-                             "myimage" : _auth.currentUser!.photoURL,
-                             "sendtoemail" : email,
-                             "sendtoname" : name,
-                             "time": FieldValue.serverTimestamp(),
-                           });
-
-                           //Navigator.of(context).push(MaterialPageRoute(builder: (context) => LocationScreen()),);
-                         },
-                       ),
-                     ),
-                   ),
-                   )
-                 ],
-               )
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  var selecteditem = null;
 
 
   @override
@@ -377,110 +260,56 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showErrorDialog(var name,var email,var phone,var cost) {
-    showDialog<String>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(20.0))),
-            backgroundColor: ColorForDesign().broun,
-            content: Text("Client Info",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: ColorForDesign.yellowwhite,
-                )),
-            actions: <Widget>[
-             Container(
-              height: 200.0,
-              width: MediaQuery.of(context).size.width,
-              margin: EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 20,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Center(
-                    child: Text(
-                      "Client Informations",
-                      style: TextStyle(
-                        fontSize: 20.0,
-                        color: ColorForDesign().broun,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 3,
-                  ),
-                  Container(
-                    child: Wrap(
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            RichText(
-                              text: TextSpan(
-                                text: 'Name : $name',
-                                style: TextStyle(
-                                    fontFamily: 'Simpletax',
-                                    fontSize: 18.0,
-                                    color: Colors.black45),),),
-                            SizedBox(height: 5,),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Email : $email',
-                                style: TextStyle(
-                                    fontFamily: 'Simpletax',
-                                    fontSize: 18.0,
-                                    color: Colors.black45),),),
-                            SizedBox(height: 5,),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Phone Number : $phone',
-                                style: TextStyle(
-                                    fontFamily: 'Simpletax',
-                                    fontSize: 18.0,
-                                    color: Colors.black45),),),
-                            SizedBox(height: 5,),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Const of delivery : $cost',
-                                style: TextStyle(
-                                    fontFamily: 'Simpletax',
-                                    fontSize: 18.0,
-                                    color: Colors.black45),),),
-                            SizedBox(height: 10,),
-                            Center(
-                              child: Builder(
-                                builder: (context) => Center(
-                                  child: ButtonWidget(
-                                    text: "Approve",
-                                    color: ColorForDesign().litegreen,
-                                    colortext:
-                                    ColorForDesign.yellowwhite,
-                                    leftsize: 5,
-                                    rightsize: 5,
-                                    fontsize: 15,
-                                    onClicked: () async {
-                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => LocationScreen()),);
-                                    },
-                                  ),
-                                ),
-                              ),
-                            )
-                          ],
-                        )
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            )
-            ],
-          );
-        });
-  }
+   void _showErrorDialog(var name,var email,var phone,var cost) {
+     showDialog<String>(
+         context: context,
+         builder: (BuildContext context) {
+           return AlertDialog(
+             shape: const RoundedRectangleBorder(
+                 borderRadius: BorderRadius.all(Radius.circular(20.0))),
+             backgroundColor: ColorForDesign.yellowwhite,
+             content: Text('Are you sure to book it..?',
+                 textAlign: TextAlign.start,
+                 style: TextStyle(
+                   color: ColorForDesign().broun,
+                 )),
+             actions: <Widget>[
+               TextButton(
+                 onPressed: () => Navigator.pop(context, 'NO'),
+                 child: Text('NO',
+                     style: TextStyle(
+                       color: ColorForDesign().broun,
+                     )),
+               ),
+               TextButton(
+                 onPressed: () async {
+                   var title = _auth.currentUser!.displayName;
+                   var body = "Approve for your order";
+                   sendNotify(1, title!, body, _auth.currentUser!.uid);
+                   await _firestore.collection('notifications').doc().set({
+                     "title": title,
+                     "body": body,
+                     "myname": _auth.currentUser!.displayName,
+                     "myemail" : _auth.currentUser!.email,
+                     "userid" : _auth.currentUser!.uid,
+                     "myimage" : _auth.currentUser!.photoURL,
+                     "sendtoemail" : email,
+                     "sendtoname" : name,
+                     "time": FieldValue.serverTimestamp(),
+                   });
+                   Navigator.pop(context, 'YES');
+                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => OrderRequest(email: email,name: name,phone: phone,cost: cost,)),);
+
+                 },
+                 child: Text('YES',
+                     style: TextStyle(
+                       color: ColorForDesign().broun,
+                     )),
+               ),
+             ],
+           );
+         });
+   }
 
 
 
@@ -942,25 +771,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   rightsize: 5,
                                                   fontsize: 15,
                                                   onClicked: () async {
-                                                    print(typeid);
-                                                    showModalBottomSheet(
-                                                      context: context,
-                                                      builder: ((builder) => bottomSheet(docs[index]['myname'], docs[index]['myemail'],
-                                                          docs[index]['myphone'], '2.00 JD')),
-
-                                                    );
-                                                    // setState(() {
-                                                    //   if (id == null){
-                                                    //     _showErrorDialog();
-                                                    //   }else {
-                                                    //     showModalBottomSheet(
-                                                    //       context: context,
-                                                    //       builder: ((builder) =>
-                                                    //           bottomSheet(eApi.id, eApi.nameEn, eApi.descEn, eApi.image, eApi.name, eApi.email,
-                                                    //             eApi.phone, eApi.userId,)),
-                                                    //     );
-                                                    //   }
-                                                    // });
+                                                    _showErrorDialog(docs[index]['myname'], docs[index]['myemail'],
+                                                        docs[index]['myphone'], '2.00 JD');
+                                                    // showModalBottomSheet(
+                                                    //   context: context,
+                                                    //   builder: ((builder) => bottomSheet(docs[index]['myname'], docs[index]['myemail'],
+                                                    //       docs[index]['myphone'], '2.00 JD')),
+                                                    //
+                                                    // );
                                                   },
                                                 ),
                                               ),
