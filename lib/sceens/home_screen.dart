@@ -227,6 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               "myemail" : _auth.currentUser!.email,
                               "myimage" : _auth.currentUser!.photoURL,
                               "myphone" : userMap!['phone'],
+                              "status" : 1,
                               "time": FieldValue.serverTimestamp(),
                             });
                             var titlen = 'Order added';
@@ -260,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-   void _showErrorDialog(var name,var email,var phone,var cost) {
+   void _showErrorDialog(var name,var email,var phone,var cost,var title,var desc) {
      showDialog<String>(
          context: context,
          builder: (BuildContext context) {
@@ -298,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
                      "time": FieldValue.serverTimestamp(),
                    });
                    Navigator.pop(context, 'YES');
-                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => OrderRequest(email: email,name: name,phone: phone,cost: cost,)),);
+                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => OrderRequest(email: email,name: name,phone: phone,cost: cost,title: title,desc: desc,)),);
 
                  },
                  child: Text('YES',
@@ -772,7 +773,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   fontsize: 15,
                                                   onClicked: () async {
                                                     _showErrorDialog(docs[index]['myname'], docs[index]['myemail'],
-                                                        docs[index]['myphone'], '2.00 JD');
+                                                        docs[index]['myphone'], '2.00 JD',docs[index]['title'],docs[index]['desc']);
                                                     // showModalBottomSheet(
                                                     //   context: context,
                                                     //   builder: ((builder) => bottomSheet(docs[index]['myname'], docs[index]['myemail'],

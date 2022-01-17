@@ -11,8 +11,8 @@ import 'package:http/http.dart' as http;
 import '../colors.dart';
 
 class OrderRequest extends StatefulWidget {
-  var name, email, phone, cost;
-   OrderRequest({Key? key,this.email,this.phone,this.name,this.cost}) : super(key: key);
+  var name, email, phone, cost,title,desc;
+   OrderRequest({Key? key,this.email,this.phone,this.name,this.cost,this.title,this.desc}) : super(key: key);
 
   @override
   _OrderRequestState createState() => _OrderRequestState();
@@ -24,8 +24,30 @@ class _OrderRequestState extends State<OrderRequest> {
   bool iscancel = true;
   bool ispicked = false;
   bool isclick = true;
-  var loginemail=TextEditingController();
+  bool iscalculate = false;
+  double totalcost = 0.0;
+  var glass=TextEditingController();
+  var plastic=TextEditingController();
+  var copper=TextEditingController();
+  var wood=TextEditingController();
+  var iron=TextEditingController();
   GlobalKey<FormState> _form= GlobalKey<FormState>();
+  Map<String, dynamic>? userMap;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _firestore.collection('wastesorting').get().then((value) {
+      setState(() {
+        userMap = value.docs[0].data();
+      });
+      print('=========================');
+      print(userMap);
+      print('=========================');
+
+    });
+  }
 
   var serverToken = "AAAA_ovwEGg:APA91bHulERonfgoLsxJrdzF6KYdRPWEd19TaJTHio_RaVrOjxJlGbrn"
       "_QA_KuBlkD3DkCzjaPkz5nk4nOouht2p3fIkh79z4DqUYrgVxMCyofL8VA36dGzn5Xqsr0tA0TtzPj-f0OmV";
@@ -73,7 +95,7 @@ class _OrderRequestState extends State<OrderRequest> {
       body: SingleChildScrollView(
         child: Container(
           color: ColorForDesign.yellowwhite,
-          height: MediaQuery.of(context).size.height,
+          height: MediaQuery.of(context).size.height*1.2,
           width: MediaQuery.of(context).size.width,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,6 +107,19 @@ class _OrderRequestState extends State<OrderRequest> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        RichText(
+                          text: TextSpan(
+                            text: widget.title,
+                            style: TextStyle(
+                                fontSize: 30.0,
+                                color: ColorForDesign().broun),),),
+                        RichText(
+                          text: TextSpan(
+                            text: widget.desc,
+                            style: TextStyle(
+                                fontSize: 25.0,
+                                color: ColorForDesign().broun),),),
+                        SizedBox(height: 20,),
                         Center(
                           child: RichText(
                             text: const TextSpan(
@@ -246,59 +281,31 @@ class _OrderRequestState extends State<OrderRequest> {
                             ) : Divider(),
                           ],
                         ),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-              ispicked ?
-              Expanded(child: Container(
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('news').snapshots(),
-                  builder: (context, snapshot) {
-                    if(snapshot.connectionState == ConnectionState.waiting){
-                      return Container(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Center(
-                              child: CircularProgressIndicator(),
-                            )
-                          ],
-                        ),
-                      );
-                    }else{
-                      final docs = snapshot.data!.docs;
-                      return ListView.builder(
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: docs.length,
-                        itemBuilder: (context, int index) {
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        ispicked ?
+                        Form(
+                          key: _form,
+                          child: Column(
                             children: [
+                              SizedBox(height: 10,),
                               Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  Padding(padding: const EdgeInsets.fromLTRB(40, 20, 5, 20),
+                                  Padding(padding: const EdgeInsets.fromLTRB(40, 20, 0, 20),
                                     child:RichText(
                                       text:  TextSpan(
-                                        text: docs[index]['title'],
+                                        text: 'Glass',
                                         style: TextStyle(
                                             fontSize: 18.0,
                                             color: Colors.black45),),),),
                                   Container(
                                     width: 200,
-                                    padding: EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                    ),
+                                    padding: const EdgeInsets.all(10),
                                     child: TextFormField(
-                                      keyboardType: TextInputType.emailAddress,
+                                      keyboardType: TextInputType.number,
                                       decoration: InputDecoration(
                                         contentPadding: const EdgeInsets.only(left: 10),
-                                        hintText: "Kilo of ${docs[index]['title']}",
-                                        hintStyle: TextStyle(fontSize: 10,fontWeight: FontWeight.bold),
+                                        hintText: "Kilo of Glass",
+                                        hintStyle: const TextStyle(fontSize: 10,fontWeight: FontWeight.bold),
                                         fillColor: Colors.white,
                                         focusColor: Colors.white,
                                         filled: true,
@@ -309,23 +316,347 @@ class _OrderRequestState extends State<OrderRequest> {
                                       ),
                                       validator: (value){
                                         if (value!.isEmpty) {
-                                          return "Please enter the current email";
+                                          return "Required";
                                         }
                                       },
-                                      controller: loginemail,
+                                      controller: glass,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10,),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Padding(padding: const EdgeInsets.fromLTRB(40, 20, 0, 20),
+                                    child:RichText(
+                                      text:  TextSpan(
+                                        text: 'Wood',
+                                        style: TextStyle(
+                                            fontSize: 18.0,
+                                            color: Colors.black45),),),),
+                                  Container(
+                                    width: 200,
+                                    padding: const EdgeInsets.all(10),
+                                    child: TextFormField(
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        contentPadding: const EdgeInsets.only(left: 10),
+                                        hintText: "Kilo of Wood",
+                                        hintStyle: const TextStyle(fontSize: 10,fontWeight: FontWeight.bold),
+                                        fillColor: Colors.white,
+                                        focusColor: Colors.white,
+                                        filled: true,
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10.0),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
+                                      validator: (value){
+                                        if (value!.isEmpty) {
+                                          return "Required";
+                                        }
+                                      },
+                                      controller: wood,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10,),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Padding(padding: const EdgeInsets.fromLTRB(40, 20, 0, 20),
+                                    child:RichText(
+                                      text:  const TextSpan(
+                                        text: 'Plastic',
+                                        style: TextStyle(
+                                            fontSize: 18.0,
+                                            color: Colors.black45),),),),
+                                  Container(
+                                    width: 200,
+                                    padding: const EdgeInsets.all(10),
+                                    child: TextFormField(
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        contentPadding: const EdgeInsets.only(left: 10),
+                                        hintText: "Kilo of Plastic",
+                                        hintStyle: const TextStyle(fontSize: 10,fontWeight: FontWeight.bold),
+                                        fillColor: Colors.white,
+                                        focusColor: Colors.white,
+                                        filled: true,
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10.0),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
+                                      validator: (value){
+                                        if (value!.isEmpty) {
+                                          return "Required";
+                                        }
+                                      },
+                                      controller: plastic,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10,),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Padding(padding: const EdgeInsets.fromLTRB(40, 20, 0, 20),
+                                    child:RichText(
+                                      text:  TextSpan(
+                                        text: 'Iron',
+                                        style: TextStyle(
+                                            fontSize: 18.0,
+                                            color: Colors.black45),),),),
+                                  Container(
+                                    width: 200,
+                                    padding: const EdgeInsets.all(10),
+                                    child: TextFormField(
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        contentPadding: const EdgeInsets.only(left: 10),
+                                        hintText: "Kilo of Iron",
+                                        hintStyle: const TextStyle(fontSize: 10,fontWeight: FontWeight.bold),
+                                        fillColor: Colors.white,
+                                        focusColor: Colors.white,
+                                        filled: true,
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10.0),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
+                                      validator: (value){
+                                        if (value!.isEmpty) {
+                                          return "Required";
+                                        }
+                                      },
+                                      controller: iron,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10,),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Padding(padding: const EdgeInsets.fromLTRB(40, 20, 0, 20),
+                                    child:RichText(
+                                      text:  TextSpan(
+                                        text: 'Copper',
+                                        style: TextStyle(
+                                            fontSize: 18.0,
+                                            color: Colors.black45),),),),
+                                  Container(
+                                    width: 200,
+                                    padding: const EdgeInsets.all(10),
+                                    child: TextFormField(
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        contentPadding: const EdgeInsets.only(left: 10),
+                                        hintText: "Kilo of Copper",
+                                        hintStyle: const TextStyle(fontSize: 10,fontWeight: FontWeight.bold),
+                                        fillColor: Colors.white,
+                                        focusColor: Colors.white,
+                                        filled: true,
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10.0),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
+                                      validator: (value){
+                                        if (value!.isEmpty) {
+                                          return "Required";
+                                        }
+                                      },
+                                      controller: copper,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10,),
+                              Builder(
+                                builder: (context) => Center(
+                                  child: ButtonWidget(
+                                    text: "Calculate",
+                                    color: ColorForDesign().litegreen,
+                                    colortext:
+                                    ColorForDesign.yellowwhite,
+                                    leftsize: 5,
+                                    rightsize: 5,
+                                    fontsize: 15,
+                                    onClicked: () async {
+                                      var glasstxt = glass.text;
+                                      var woodtxt = wood.text;
+                                      var irontxt = iron.text;
+                                      var plastictxt = plastic.text;
+                                      var coppertxt = copper.text;
+                                        if (_form.currentState!.validate()){
+                                          double glass1 = double.parse(glasstxt) * userMap!['costglass'];
+                                          double wood1 = double.parse(woodtxt) * userMap!['costwood'];
+                                          double iron1 = double.parse(irontxt) * userMap!['costiron'];
+                                          double plastic1 = double.parse(plastictxt) * userMap!['costplastic'];
+                                          double copper1 = double.parse(coppertxt) * userMap!['costcopper'];
+                                          totalcost = glass1+wood1+iron1+plastic1+copper1;
+                                          print(totalcost);
+                                          setState(() {
+                                            iscalculate=true;
+                                          });
+                                        }else{
+                                          return;
+                                        }
+                                    },
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 10,),
+                              iscalculate?
+                              Column(
+                                children: [
+                                  Card(
+                                    child: ListTile(
+                                        title: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            RichText(
+                                              text:  TextSpan(
+                                                text: 'Total Price',
+                                                style: TextStyle(
+                                                    fontSize: 20.0,
+                                                    color: ColorForDesign().broun),),),
+                                            RichText(
+                                              text:  TextSpan(
+                                                text: '$totalcost JOD',
+                                                style: TextStyle(
+                                                    fontSize: 20.0,
+                                                    color: ColorForDesign().broun),),),
+                                          ],
+                                        )
+                                    ),
+                                  ),
+                                  Builder(
+                                    builder: (context) => Center(
+                                      child: ButtonWidget(
+                                        text: "Done",
+                                        color: ColorForDesign().litegreen,
+                                        colortext:
+                                        ColorForDesign.yellowwhite,
+                                        leftsize: 5,
+                                        rightsize: 5,
+                                        fontsize: 15,
+                                        onClicked: () async {
+                                          var glasstxt = glass.text;
+                                          var woodtxt = wood.text;
+                                          var irontxt = iron.text;
+                                          var plastictxt = plastic.text;
+                                          var coppertxt = copper.text;
+                                            await _firestore.collection('ordercompleted').doc().set({
+                                              "title": widget.title,
+                                              "desc": widget.desc,
+                                              "totalcost" : totalcost,
+                                              "myname": _auth.currentUser!.displayName,
+                                              "myemail" : _auth.currentUser!.email,
+                                              "userid" : _auth.currentUser!.uid,
+                                              "myimage" : _auth.currentUser!.photoURL,
+                                              "sendtoemail" : widget.email,
+                                              "sendtoname" : widget.name,
+                                              "deliverycost" : widget.cost,
+                                              "time": FieldValue.serverTimestamp(),
+                                            });
+                                          glass.clear();
+                                          wood.clear();
+                                          iron.clear();
+                                          plastic.clear();
+                                          copper.clear();
+                                            Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => NavBar()),);
+
+
+                                        },
+                                      ),
                                     ),
                                   ),
                                 ],
                               )
+                                : Container(),
                             ],
-                          );
-                        },
-                      );
-                      ;
-                    }
-                  },
+                          ),
+                        ) : Container(),
+
+                      ],
+                    )
+                  ],
                 ),
-              )) : Container()
+              ),
+              // ispicked ?
+              // Expanded(child: Container(
+              //   child: StreamBuilder<QuerySnapshot>(
+              //     stream: FirebaseFirestore.instance.collection('news').snapshots(),
+              //     builder: (context, snapshot) {
+              //       if(snapshot.connectionState == ConnectionState.waiting){
+              //         return Container(
+              //           child: Column(
+              //             mainAxisAlignment: MainAxisAlignment.center,
+              //             crossAxisAlignment: CrossAxisAlignment.start,
+              //             children: const [
+              //               Center(
+              //                 child: CircularProgressIndicator(),
+              //               )
+              //             ],
+              //           ),
+              //         );
+              //       }else{
+              //         final docs = snapshot.data!.docs;
+              //         return Column(
+              //           crossAxisAlignment: CrossAxisAlignment.start,
+              //           mainAxisAlignment: MainAxisAlignment.center,
+              //           children: [
+              //             Row(
+              //               mainAxisAlignment: MainAxisAlignment.start,
+              //               children: [
+              //                 Padding(padding: const EdgeInsets.fromLTRB(40, 20, 0, 20),
+              //                   child:RichText(
+              //                     text:  TextSpan(
+              //                       text: docs[0]['title'],
+              //                       style: TextStyle(
+              //                           fontSize: 18.0,
+              //                           color: Colors.black45),),),),
+              //                 Container(
+              //                   width: 200,
+              //                   padding: const EdgeInsets.all(10),
+              //                   child: TextFormField(
+              //                     keyboardType: TextInputType.number,
+              //                     decoration: InputDecoration(
+              //                       contentPadding: const EdgeInsets.only(left: 10),
+              //                       hintText: "Kilo of ${docs[0]['title']}",
+              //                       hintStyle: const TextStyle(fontSize: 10,fontWeight: FontWeight.bold),
+              //                       fillColor: Colors.white,
+              //                       focusColor: Colors.white,
+              //                       filled: true,
+              //                       border: OutlineInputBorder(
+              //                         borderRadius: BorderRadius.circular(10.0),
+              //                         borderSide: BorderSide.none,
+              //                       ),
+              //                     ),
+              //                     validator: (value){
+              //                       if (value!.isEmpty) {
+              //                         return "Please enter the current email";
+              //                       }
+              //                     },
+              //                     controller: loginemail,
+              //                   ),
+              //                 ),
+              //               ],
+              //             )
+              //
+              //           ],
+              //         );
+              //       }
+              //     },
+              //   ),
+              // )) : Container(),
+
             ],
           ),
 
