@@ -24,9 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   var loginformkey = GlobalKey<FormState>();
   var signUpformkey = GlobalKey<FormState>();
   bool _passwordVisible = true;
-
-  bool _passwordsignupVisible = true;
-  bool _passwordsignupconfermVisible = true;
+  var type;
 
   late String userEmail;
   late String userPassowrd;
@@ -46,6 +44,8 @@ class _LoginScreenState extends State<LoginScreen> {
   var loginemail=TextEditingController();
   var loginpass=TextEditingController();
   var confpass;
+  Map<String, dynamic>? userMap;
+
 
 
   void _showErrorDialog(String msg) {
@@ -75,6 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -302,46 +303,44 @@ class _LoginScreenState extends State<LoginScreen> {
                           onClicked: ()async{
                             var lemail = loginemail.text;
                             var lpass = loginpass.text;
-                              if (!loginformkey.currentState!.validate()) {
-                                return null;
-                              } else {
-                                loginformkey.currentState!.save();
-                                SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-                                sharedPreferences.setInt('typeId', widget.typeid);
-                                try{
-                                  UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-                                      email: lemail, password: lpass);
-                                  //ConfirmationResult userCredentialphone = await _auth.signInWithPhoneNumber(phone);
+                            if (!loginformkey.currentState!.validate()) {
+                              return null;
+                            } else {
+                              loginformkey.currentState!.save();
+                              SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+                              sharedPreferences.setInt('typeId', widget.typeid);
+                              try{
+                                UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+                                    email: lemail, password: lpass);
+                                //ConfirmationResult userCredentialphone = await _auth.signInWithPhoneNumber(phone);
+                                _firestore.collection('users').doc(_auth.currentUser!.uid).get().
+                                then((value) => userCredential.user!.updateDisplayName(value['name']));
+                                User? user = FirebaseAuth.instance.currentUser;
+                                if (userCredential.user!.emailVerified == false) {
+                                  //await user!.sendEmailVerification();
+                                  _showErrorDialog(
+                                      'You have to check your email..!');
+                                }else{
                                   print("Login Sucessfull");
-                                  _firestore.collection('users').doc(_auth.currentUser!.uid).get().
-                                  then((value) => userCredential.user!.updateDisplayName(value['name']));
-                                  User? user = FirebaseAuth.instance.currentUser;
-                                  if (userCredential.user!.emailVerified == false) {
-                                    //await user!.sendEmailVerification();
-                                    _showErrorDialog(
-                                        'You have to check your email..!');
-                                  }else{
-                                    SharedPreferences sharedPreferences = await SharedPreferences
-                                        .getInstance();
-                                    sharedPreferences.setString(
-                                        'email', lemail);
-                                    Navigator.of(context).pushAndRemoveUntil(
-                                        MaterialPageRoute(
-                                            builder: (BuildContext context) =>
-                                                NavBar()),
-                                            (Route<dynamic> route) => false);
-                                  }
-
-                                }on FirebaseAuthException catch (e) {
-                                  if (e.code == 'user-not-found') {
-                                    CircularProgressIndicator();
-                                    _showErrorDialog('No user found for that email.');
-                                  } else if (e.code == 'wrong-password') {
-                                    _showErrorDialog('The password is incorrect.');
-                                  }
+                                  SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+                                  sharedPreferences.setString('email', lemail);
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(
+                                          builder: (BuildContext context) =>
+                                              NavBar()),
+                                          (Route<dynamic> route) => false);
                                 }
 
+                              }on FirebaseAuthException catch (e) {
+                                if (e.code == 'user-not-found') {
+                                  CircularProgressIndicator();
+                                  _showErrorDialog('No user found for that email.');
+                                } else if (e.code == 'wrong-password') {
+                                  _showErrorDialog('The password is incorrect.');
+                                }
                               }
+
+                            }
                           },
                         ),
                       ),

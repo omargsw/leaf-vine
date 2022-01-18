@@ -18,6 +18,26 @@ class _MyOrdersState extends State<MyOrders> {
 
   FirebaseAuth _auth = FirebaseAuth.instance;
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  void showFloatingSnackBar(BuildContext context) {
+    final snackBar = SnackBar(
+      content: Text(
+        "Order has deleted",
+        style: TextStyle(fontSize: 15),
+        textAlign: TextAlign.center,
+      ),
+      backgroundColor: Colors.black45,
+      duration: Duration(seconds: 3),
+      shape: StadiumBorder(),
+      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      behavior: SnackBarBehavior.floating,
+      elevation: 0,
+    );
+
+    Scaffold.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(snackBar);
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,7 +63,7 @@ class _MyOrdersState extends State<MyOrders> {
                 height: double.infinity,
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance.collection('orders').
-                  where("myemail", isEqualTo: '${_auth.currentUser!.email}').snapshots(),
+                  where("myemail", isEqualTo: '${_auth.currentUser!.email}').where('status',isEqualTo: 1 ).snapshots(),
                   builder: (context, snapshot) {
                     if(snapshot.connectionState == ConnectionState.waiting){
                       return Container(
@@ -65,31 +85,47 @@ class _MyOrdersState extends State<MyOrders> {
                         return Card(
                           margin: EdgeInsets.fromLTRB(20, 10, 20, 0),
                           child: ListTile(
-                            leading: ClipOval(
-                              child: Image.network('${docs[index]['myimage']}',height: 40,),
+                            leading: CircleAvatar(
+                              radius: 20,
+                              backgroundImage: NetworkImage('${_auth.currentUser!.photoURL}'),
                             ),
-                            title: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                RichText(
-                                  text: TextSpan(
-                                    text: docs[index]['title'],
-                                    style: TextStyle(
-                                        color: ColorForDesign().broun,
-                                        fontSize: 20.0,
-                                        fontWeight: FontWeight.bold),
-                                  ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    RichText(
+                                      text: TextSpan(
+                                        text: docs[index]['title'],
+                                        style: TextStyle(
+                                            color: ColorForDesign().broun,
+                                            fontSize: 20.0,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    RichText(
+                                      text: TextSpan(
+                                        text: docs[index]['desc'],
+                                        style: TextStyle(
+                                            color: ColorForDesign().broun,
+                                            fontSize: 15.0),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                RichText(
-                                  text: TextSpan(
-                                    text: docs[index]['desc'],
-                                    style: TextStyle(
-                                        color: ColorForDesign().broun,
-                                        fontSize: 15.0),
-                                  ),
-                                ),
+                                TextButton(onPressed: (){
+                                  CollectionReference userRef = FirebaseFirestore.instance.collection('orders');
+                                  userRef.doc(docs[index].id).update({
+                                    "status" : 0,
+                                  }).then((value) {
+                                    showFloatingSnackBar(context);
+                                  }).catchError((e){
+                                    print("Error is $e");
+                                  });
+                                }, child: const Text('Delete',style: TextStyle(color: Colors.red),))
                               ],
-                            ),
+                            )
                           ),
                         );
                       },);

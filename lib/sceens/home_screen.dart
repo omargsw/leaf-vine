@@ -242,6 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               "myimage" : _auth.currentUser!.photoURL,
                               "sendtoemail" : 'all users',
                               "sendtoname" : 'all users',
+                              "status" : 1,
                               "time": FieldValue.serverTimestamp(),
                             });
                             title.clear();
@@ -261,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-   void _showErrorDialog(var name,var email,var phone,var cost,var title,var desc) {
+   void _showErrorDialog(var name,var email,var phone,var cost,var title,var desc,var id) {
      showDialog<String>(
          context: context,
          builder: (BuildContext context) {
@@ -296,10 +297,12 @@ class _HomeScreenState extends State<HomeScreen> {
                      "myimage" : _auth.currentUser!.photoURL,
                      "sendtoemail" : email,
                      "sendtoname" : name,
+                     "status" : 1,
                      "time": FieldValue.serverTimestamp(),
                    });
                    Navigator.pop(context, 'YES');
-                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => OrderRequest(email: email,name: name,phone: phone,cost: cost,title: title,desc: desc,)),);
+                   Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => OrderRequest(email: email,name: name,
+                     phone: phone,cost: cost,title: title,desc: desc,id:id)),);
 
                  },
                  child: Text('YES',
@@ -314,7 +317,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
-  final Stream<QuerySnapshot> _usersStream = FirebaseFirestore.instance.collection('orders').snapshots();
   final Stream<QuerySnapshot> _newsStream = FirebaseFirestore.instance.collection('news').snapshots();
 
   @override
@@ -328,11 +330,11 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 "For",
-                style: TextStyle(color: ColorForDesign().litegreen,fontWeight: FontWeight.bold),
+                style: TextStyle(color: ColorForDesign().darkyellow,fontWeight: FontWeight.bold),
               ),
               Text(
                 "Client",
-                style: TextStyle(color: ColorForDesign().litegreen,fontWeight: FontWeight.bold),
+                style: TextStyle(color: ColorForDesign().darkyellow,fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -454,7 +456,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 text: "Price per kilo : ${docs[index]['k']}",
                                                 style: const TextStyle(color: ColorForDesign.yellowwhite,
                                                     fontSize: 18.0,
-                                                    fontFamily: 'Simpletax'),),),),
+                                                    ),),),),
                                         ],
                                       ),
                                     ),
@@ -490,7 +492,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: double.infinity,
                       child: StreamBuilder<QuerySnapshot>(
                         stream: FirebaseFirestore.instance.collection('orders').
-                        where("myemail", isNotEqualTo: '${_auth.currentUser!.email}').snapshots(),
+                        where('status',isEqualTo: 1 ).snapshots(),
                         builder: (context, snapshot) {
                           if(snapshot.connectionState == ConnectionState.waiting){
                             return Container(
@@ -504,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ],
                               ),
                             );
-                          }else{
+                          }else {
                             final docs = snapshot.data!.docs;
                             return GridView.builder(
                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -516,7 +518,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   padding: const EdgeInsets.all(8),
                                   child: Container(
                                     decoration: const BoxDecoration(
-                                      borderRadius: BorderRadius.all(Radius.circular(16.0)),
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(16.0)),
                                       boxShadow: <BoxShadow>[
                                         BoxShadow(
                                           color: Colors.grey,
@@ -527,34 +530,48 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                     child: ClipRRect(
                                       borderRadius:
-                                      const BorderRadius.all(Radius.circular(16.0)),
+                                      const BorderRadius.all(
+                                          Radius.circular(16.0)),
                                       child: Column(
                                         children: [
                                           Expanded(
                                             child: Container(
                                               color: ColorForDesign.yellowwhite,
                                               child: Column(
-                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                mainAxisAlignment: MainAxisAlignment
+                                                    .start,
+                                                crossAxisAlignment: CrossAxisAlignment
+                                                    .start,
                                                 children: <Widget>[
                                                   Padding(
-                                                    padding: const EdgeInsets.only(top: 5),
+                                                    padding: const EdgeInsets
+                                                        .only(top: 5),
                                                     child: Row(
-                                                      mainAxisAlignment: MainAxisAlignment.start,
+                                                      mainAxisAlignment: MainAxisAlignment
+                                                          .start,
                                                       children: [
-                                                        Padding(padding: const EdgeInsets.fromLTRB(10, 5, 0, 5),
-                                                        child: ClipOval(
-                                                          child: Image.network('${docs[index]['myimage']}',height: 40,),
-                                                        ),),
                                                         Padding(
-                                                          padding: const EdgeInsets.only(left: 10),
+                                                          padding: const EdgeInsets
+                                                              .fromLTRB(
+                                                              10, 5, 0, 5),
+                                                          child: CircleAvatar(
+                                                            radius: 20.0,
+                                                            backgroundImage: NetworkImage(
+                                                                '${docs[index]['myimage']}'),
+
+                                                          ),),
+                                                        Padding(
+                                                          padding: const EdgeInsets
+                                                              .only(left: 10),
                                                           child: RichText(
                                                             text: TextSpan(
                                                               text: docs[index]['myname'],
                                                               style: TextStyle(
-                                                                color: Colors.black26,
+                                                                color: Colors
+                                                                    .black26,
                                                                 fontSize: 12.0,
-                                                                fontWeight: FontWeight.bold,
+                                                                fontWeight: FontWeight
+                                                                    .bold,
                                                               ),
                                                             ),
                                                           ),
@@ -567,9 +584,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       text: TextSpan(
                                                         text: docs[index]['title'],
                                                         style: TextStyle(
-                                                            color: ColorForDesign().broun,
+                                                            color: ColorForDesign()
+                                                                .broun,
                                                             fontSize: 20.0,
-                                                            fontWeight: FontWeight.bold),
+                                                            fontWeight: FontWeight
+                                                                .bold),
                                                       ),
                                                     ),
                                                   ),
@@ -578,7 +597,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       text: TextSpan(
                                                         text: docs[index]['desc'],
                                                         style: TextStyle(
-                                                            color: ColorForDesign().broun,
+                                                            color: ColorForDesign()
+                                                                .broun,
                                                             fontSize: 15.0),
                                                       ),
                                                     ),
@@ -595,6 +615,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               },
                               itemCount: docs.length,
                             );
+
                           }
                         },
                       )
@@ -615,11 +636,11 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 "For",
-                style: TextStyle(color: ColorForDesign().litegreen,fontWeight: FontWeight.bold),
+                style: TextStyle(color: ColorForDesign().darkyellow,fontWeight: FontWeight.bold),
               ),
               Text(
                 "Driver",
-                style: TextStyle(color: ColorForDesign().litegreen,fontWeight: FontWeight.bold),
+                style: TextStyle(color: ColorForDesign().darkyellow,fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -667,7 +688,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: double.infinity,
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance.collection('orders').
-                  where("myemail", isNotEqualTo: '${_auth.currentUser!.email}').snapshots(),
+                  where('status',isEqualTo: 1 ).snapshots(),
                   builder: (context, snapshot) {
                     if(snapshot.connectionState == ConnectionState.waiting){
                       return Container(
@@ -682,120 +703,123 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     }else{
-                      final docs = snapshot.data!.docs;
-                      return GridView.builder(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 2 / 2.1,
-                        ),
-                        itemBuilder: (_, index) {
-                          return Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                borderRadius: BorderRadius.all(Radius.circular(16.0)),
-                                boxShadow: <BoxShadow>[
-                                  BoxShadow(
-                                    color: Colors.grey,
-                                    // offset: const Offset(3, 3),
-                                    blurRadius: 16,
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius:
-                                const BorderRadius.all(Radius.circular(16.0)),
-                                child: Column(
-                                  children: [
-                                    Expanded(
-                                      child: Container(
-                                        color: ColorForDesign.yellowwhite,
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.start,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: <Widget>[
-                                            Padding(
-                                              padding: const EdgeInsets.only(top: 5),
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                children: [
-                                                  Padding(padding: const EdgeInsets.fromLTRB(10, 5, 0, 5),
-                                                    child: ClipOval(
-                                                      child: Image.network('${docs[index]['myimage']}',height: 40,),
-                                                    ),),
-                                                  Padding(
-                                                    padding: const EdgeInsets.only(left: 10),
-                                                    child: RichText(
-                                                      text: TextSpan(
-                                                        text: docs[index]['myname'],
-                                                        style: TextStyle(
-                                                          color: Colors.black26,
-                                                          fontSize: 12.0,
-                                                          fontWeight: FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Center(
-                                              child: RichText(
-                                                text: TextSpan(
-                                                  text: docs[index]['title'],
-                                                  style: TextStyle(
-                                                      color: ColorForDesign().broun,
-                                                      fontSize: 20.0,
-                                                      fontWeight: FontWeight.bold),
-                                                ),
-                                              ),
-                                            ),
-                                            Center(
-                                              child: RichText(
-                                                text: TextSpan(
-                                                  text: docs[index]['desc'],
-                                                  style: TextStyle(
-                                                      color: ColorForDesign().broun,
-                                                      fontSize: 15.0),
-                                                ),
-                                              ),
-                                            ),
-                                            Spacer(),
-                                            Builder(
-                                              builder: (context) => Center(
-                                                child: ButtonWidget(
-                                                  text: "Book it",
-                                                  color: ColorForDesign().litegreen,
-                                                  colortext:
-                                                  ColorForDesign.yellowwhite,
-                                                  leftsize: 5,
-                                                  rightsize: 5,
-                                                  fontsize: 15,
-                                                  onClicked: () async {
-                                                    _showErrorDialog(docs[index]['myname'], docs[index]['myemail'],
-                                                        docs[index]['myphone'], '2.00 JD',docs[index]['title'],docs[index]['desc']);
-                                                    // showModalBottomSheet(
-                                                    //   context: context,
-                                                    //   builder: ((builder) => bottomSheet(docs[index]['myname'], docs[index]['myemail'],
-                                                    //       docs[index]['myphone'], '2.00 JD')),
-                                                    //
-                                                    // );
-                                                  },
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                        final docs = snapshot.data!.docs;
+                        return GridView.builder(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 2 / 2.1,
+                          ),
+                          itemBuilder: (_, index) {
+                            return Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  borderRadius: BorderRadius.all(Radius.circular(16.0)),
+                                  boxShadow: <BoxShadow>[
+                                    BoxShadow(
+                                      color: Colors.grey,
+                                      // offset: const Offset(3, 3),
+                                      blurRadius: 16,
                                     ),
                                   ],
                                 ),
+                                child: ClipRRect(
+                                  borderRadius:
+                                  const BorderRadius.all(Radius.circular(16.0)),
+                                  child: Column(
+                                    children: [
+                                      Expanded(
+                                        child: Container(
+                                          color: ColorForDesign.yellowwhite,
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                              Padding(
+                                                padding: const EdgeInsets.only(top: 5),
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.start,
+                                                  children: [
+                                                    Padding(padding: const EdgeInsets.fromLTRB(10, 5, 0, 5),
+                                                      child: CircleAvatar(
+                                                        radius: 20.0,
+                                                        backgroundImage: NetworkImage('${docs[index]['myimage']}'),
+
+                                                      ),),
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(left: 10),
+                                                      child: RichText(
+                                                        text: TextSpan(
+                                                          text: docs[index]['myname'],
+                                                          style: TextStyle(
+                                                            color: Colors.black26,
+                                                            fontSize: 12.0,
+                                                            fontWeight: FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Center(
+                                                child: RichText(
+                                                  text: TextSpan(
+                                                    text: docs[index]['title'],
+                                                    style: TextStyle(
+                                                        color: ColorForDesign().broun,
+                                                        fontSize: 20.0,
+                                                        fontWeight: FontWeight.bold),
+                                                  ),
+                                                ),
+                                              ),
+                                              Center(
+                                                child: RichText(
+                                                  text: TextSpan(
+                                                    text: docs[index]['desc'],
+                                                    style: TextStyle(
+                                                        color: ColorForDesign().broun,
+                                                        fontSize: 15.0),
+                                                  ),
+                                                ),
+                                              ),
+                                              Spacer(),
+                                              Builder(
+                                                builder: (context) => Center(
+                                                  child: ButtonWidget(
+                                                    text: "Book it",
+                                                    color: ColorForDesign().litegreen,
+                                                    colortext:
+                                                    ColorForDesign.yellowwhite,
+                                                    leftsize: 5,
+                                                    rightsize: 5,
+                                                    fontsize: 15,
+                                                    onClicked: () async {
+                                                      _showErrorDialog(docs[index]['myname'], docs[index]['myemail'],
+                                                          docs[index]['myphone'], '2.00 JD',docs[index]['title'],docs[index]['desc'],docs[index].id);
+                                                      // showModalBottomSheet(
+                                                      //   context: context,
+                                                      //   builder: ((builder) => bottomSheet(docs[index]['myname'], docs[index]['myemail'],
+                                                      //       docs[index]['myphone'], '2.00 JD')),
+                                                      //
+                                                      // );
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                        itemCount: docs.length,
-                      );
+                            );
+                          },
+                          itemCount: docs.length,
+                        );
+
                     }
                   },
                 )

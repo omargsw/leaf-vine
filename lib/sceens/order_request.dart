@@ -11,8 +11,8 @@ import 'package:http/http.dart' as http;
 import '../colors.dart';
 
 class OrderRequest extends StatefulWidget {
-  var name, email, phone, cost,title,desc;
-   OrderRequest({Key? key,this.email,this.phone,this.name,this.cost,this.title,this.desc}) : super(key: key);
+  var name, email, phone, cost,title,desc,id;
+   OrderRequest({Key? key,this.email,this.phone,this.name,this.cost,this.title,this.desc,this.id}) : super(key: key);
 
   @override
   _OrderRequestState createState() => _OrderRequestState();
@@ -42,9 +42,6 @@ class _OrderRequestState extends State<OrderRequest> {
       setState(() {
         userMap = value.docs[0].data();
       });
-      print('=========================');
-      print(userMap);
-      print('=========================');
 
     });
   }
@@ -84,7 +81,7 @@ class _OrderRequestState extends State<OrderRequest> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0.2,
-        iconTheme: IconThemeData(color: ColorForDesign.yellowwhite),
+        leading: Text(''),
         backgroundColor: ColorForDesign().broun,
         title:  const Text("Order Details",
           style: TextStyle(color: ColorForDesign.yellowwhite,),
@@ -229,6 +226,7 @@ class _OrderRequestState extends State<OrderRequest> {
                                       "myimage" : _auth.currentUser!.photoURL,
                                       "sendtoemail" : widget.email,
                                       "sendtoname" : widget.name,
+                                      "status" : 1,
                                       "time": FieldValue.serverTimestamp(),
                                     });
                                     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => NavBar()),);
@@ -263,6 +261,7 @@ class _OrderRequestState extends State<OrderRequest> {
                                         "myimage" : _auth.currentUser!.photoURL,
                                         "sendtoemail" : widget.email,
                                         "sendtoname" : widget.name,
+                                        "status" : 1,
                                         "time": FieldValue.serverTimestamp(),
                                       });
                                       setState(() {
@@ -547,11 +546,6 @@ class _OrderRequestState extends State<OrderRequest> {
                                         rightsize: 5,
                                         fontsize: 15,
                                         onClicked: () async {
-                                          var glasstxt = glass.text;
-                                          var woodtxt = wood.text;
-                                          var irontxt = iron.text;
-                                          var plastictxt = plastic.text;
-                                          var coppertxt = copper.text;
                                             await _firestore.collection('ordercompleted').doc().set({
                                               "title": widget.title,
                                               "desc": widget.desc,
@@ -564,6 +558,14 @@ class _OrderRequestState extends State<OrderRequest> {
                                               "sendtoname" : widget.name,
                                               "deliverycost" : widget.cost,
                                               "time": FieldValue.serverTimestamp(),
+                                            });
+                                            CollectionReference userRef = FirebaseFirestore.instance.collection('orders');
+                                            userRef.doc(widget.id).update({
+                                              "status" : 0,
+                                            }).then((value) {
+
+                                            }).catchError((e){
+                                              print("Error is $e");
                                             });
                                           glass.clear();
                                           wood.clear();

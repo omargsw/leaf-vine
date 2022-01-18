@@ -56,7 +56,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       imageFile = File(pickedFile!.path);
       _load = false;
     });
-    uploadImage();
 
   }
 
@@ -141,9 +140,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: <Widget>[
-          Text(
-            "Choose Pic",
-            style: const TextStyle(
+          const Text(
+            "Choose Profile Image",
+            style: TextStyle(
               fontSize: 20.0,
             ),
           ),
@@ -170,18 +169,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // TODO: implement initState
     super.initState();
     setdata();
-    print(_auth.currentUser!.photoURL);
-    print(_auth.currentUser);
   }
   void setdata() async {
     await _firestore.collection('users').where('email',isEqualTo: _auth.currentUser!.email).get().then((value) {
       setState(() {
         userMap = value.docs[0].data();
       });
-      print('=========================');
-      print(userMap);
-      print('=========================');
-      print(_auth.currentUser!.uid);
 
     });
     setState(() {
@@ -211,7 +204,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
             onPressed: (){
-              _auth.sendPasswordResetEmail(email: email.text);
+              if(_form3.currentState!.validate()) {
+                _auth.sendPasswordResetEmail(email: email.text);
+              }
             },
           ),
         ],
@@ -280,12 +275,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
                                     int? id= sharedPreferences.getInt('userID');
                                     if (imageFile == null ) return ;
-                                    //photo = base64Encode(imageFile!.readAsBytesSync());
-                                    //imagepath = imageFile!.path.split("/").last;
-                                    //updateImage(id!, imagepath, photo);
-                                    imageCache!.clear();
-                                    //sharedPreferences.setString('profile_photo_path', imagepath);
-
+                                    uploadImage();
                                   },
                                   child: const Icon(
                                     Icons.done,

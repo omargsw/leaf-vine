@@ -54,6 +54,25 @@ class _NotificationsState extends State<Notifications> {
       ),
     );
   }
+  void showFloatingSnackBar(BuildContext context) {
+    final snackBar = SnackBar(
+      content: Text(
+        "Notification has deleted",
+        style: TextStyle(fontSize: 15),
+        textAlign: TextAlign.center,
+      ),
+      backgroundColor: Colors.black45,
+      duration: Duration(seconds: 3),
+      shape: StadiumBorder(),
+      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      behavior: SnackBarBehavior.floating,
+      elevation: 0,
+    );
+
+    Scaffold.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(snackBar);
+  }
 
 
   @override
@@ -71,7 +90,7 @@ class _NotificationsState extends State<Notifications> {
       ),
       body: typeid == 1 ?
       StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('notifications').where('sendtoemail',isEqualTo: email).snapshots(),
+        stream: FirebaseFirestore.instance.collection('notifications').where('sendtoemail',isEqualTo: email).where('status',isEqualTo: 1).snapshots(),
         builder: (context, snapshot) {
           if(snapshot.connectionState == ConnectionState.waiting){
             return Container(
@@ -96,8 +115,14 @@ class _NotificationsState extends State<Notifications> {
                     secondaryActions: <Widget>[
                       InkWell(
                         onTap: () {
-                          FirebaseFirestore.instance.collection('notifications').doc().delete();
-                          Navigator.of(context).pop();
+                          CollectionReference userRef = FirebaseFirestore.instance.collection('notifications');
+                          userRef.doc(docs[index].id).update({
+                            "status" : 0,
+                          }).then((value) {
+                            showFloatingSnackBar(context);
+                          }).catchError((e){
+                            print("Error is $e");
+                          });
                         },
                         child: slideContiner(
                             Icons.delete, Colors.red, "Delete"),
@@ -147,7 +172,7 @@ class _NotificationsState extends State<Notifications> {
         },
       ) :
       StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('notifications').where('sendtoemail',isEqualTo: 'all users').snapshots(),
+        stream: FirebaseFirestore.instance.collection('notifications').where('sendtoemail',isEqualTo: 'all users').where('status',isEqualTo: 1).snapshots(),
         builder: (context, snapshot) {
           if(snapshot.connectionState == ConnectionState.waiting){
             return Container(
@@ -172,7 +197,14 @@ class _NotificationsState extends State<Notifications> {
                   secondaryActions: <Widget>[
                     InkWell(
                       onTap: () {
-                        Navigator.of(context).pop();
+                        CollectionReference userRef = FirebaseFirestore.instance.collection('notifications');
+                        userRef.doc(docs[index].id).update({
+                          "status" : 0,
+                        }).then((value) {
+                          showFloatingSnackBar(context);
+                        }).catchError((e){
+                          print("Error is $e");
+                        });
                       },
                       child: slideContiner(
                           Icons.delete, Colors.red, "Delete"),
