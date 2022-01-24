@@ -92,7 +92,7 @@ class _OrderRequestState extends State<OrderRequest> {
       body: SingleChildScrollView(
         child: Container(
           color: ColorForDesign.yellowwhite,
-          height: MediaQuery.of(context).size.height*1.2,
+          height: MediaQuery.of(context).size.height*1.4,
           width: MediaQuery.of(context).size.width,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

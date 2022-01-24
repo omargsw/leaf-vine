@@ -370,6 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           backgroundColor: ColorForDesign().broun,
         ),
+        //add order buttons
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             _AddProduct(context);
@@ -788,7 +789,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 builder: (context) => Center(
                                                   child: ButtonWidget(
                                                     text: "Book it",
-                                                    color: ColorForDesign().litegreen,
+                                                    color: Colors.green,
                                                     colortext:
                                                     ColorForDesign.yellowwhite,
                                                     leftsize: 5,
