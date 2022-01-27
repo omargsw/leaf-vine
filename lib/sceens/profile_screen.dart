@@ -28,6 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Map<String, dynamic>? userMap;
+  Map<String, dynamic>? userMap2;
 
   GlobalKey<FormState> _form= GlobalKey<FormState>();
   GlobalKey<FormState> _form2= GlobalKey<FormState>();
@@ -80,6 +81,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }).catchError((e){
         print("Error is $e");
       });
+      // await _firestore.collection('orders').doc().update({
+      //   "myimage" : imageUrl,
+      // }).then((value) {
+      //   showFloatingSnackBar(context);
+      // }).catchError((e){
+      //   print("Error is $e");
+      // });
+
 
       print("Image Url => "+imageUrl);
     }
@@ -182,6 +191,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       email.text = _auth.currentUser!.email!;
       phnum.text = userMap!['phone'];
     });
+    await _firestore.collection('orders').where('myemail',isEqualTo: _auth.currentUser!.email).get().then((value) {
+      setState(() {
+        userMap2 = value.docs[0].data();
+        print(userMap2);
+      });
+
+    });
+
   }
 
   @override

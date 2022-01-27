@@ -230,6 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               "status" : 1,
                               "time": FieldValue.serverTimestamp(),
                             });
+
                             var titlen = 'Order added';
                             var body = "${_auth.currentUser!.displayName} added order";
                             sendNotify(1, titlen, body, _auth.currentUser!.uid);
@@ -442,7 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     style: const TextStyle(color: ColorForDesign.yellowwhite,
                                                         fontSize: 24.0,
                                                         fontWeight: FontWeight.bold,
-                                                        fontFamily: 'Simpletax'),),),),
+                                                       ),),),),
                                               const Padding(
                                                 padding: EdgeInsets.only(left: 40,top: 10),
                                                 child: Icon(Icons.announcement, color: Colors.white,
@@ -539,17 +540,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                             child: Container(
                                               color: ColorForDesign.yellowwhite,
                                               child: Column(
-                                                mainAxisAlignment: MainAxisAlignment
-                                                    .start,
-                                                crossAxisAlignment: CrossAxisAlignment
-                                                    .start,
+                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: <Widget>[
                                                   Padding(
                                                     padding: const EdgeInsets
                                                         .only(top: 5),
                                                     child: Row(
-                                                      mainAxisAlignment: MainAxisAlignment
-                                                          .start,
+                                                      mainAxisAlignment: MainAxisAlignment.start,
                                                       children: [
                                                         Padding(
                                                           padding: const EdgeInsets

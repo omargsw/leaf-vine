@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../colors.dart';
+import 'forgot_pass.dart';
 
 class LoginScreen extends StatefulWidget {
   int typeid;
@@ -76,6 +77,12 @@ class _LoginScreenState extends State<LoginScreen> {
         });
   }
 
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -269,7 +276,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                         onSaved: (newvalue) {
                                           userPassowrd = newvalue!;
                                         },
+                                        onTap: (){
+                                          _firestore.collection('users').where('email',isEqualTo: loginemail.text).get().then((value) {
+                                            setState(() {
+                                              userMap = value.docs[0].data();
+                                            });
+
+                                          });
+                                        },
                                       ),
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        SizedBox(width: 10,),
+                                        TextButton(
+                                          style: TextButton.styleFrom(
+                                            textStyle: const TextStyle(fontSize: 15),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (context)=>ForgetPass(),
+                                                )
+                                            );
+                                          },
+                                          child: Text('Forgot Password ?',style: TextStyle(color: ColorForDesign().liteblue),),
+                                        ),
+                                      ],
                                     ),
 
                                   ],
@@ -301,45 +335,51 @@ class _LoginScreenState extends State<LoginScreen> {
                           rightsize: 40,
                           fontsize: 25,
                           onClicked: ()async{
+
                             var lemail = loginemail.text;
                             var lpass = loginpass.text;
                             if (!loginformkey.currentState!.validate()) {
                               return null;
                             } else {
-                              loginformkey.currentState!.save();
-                              SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-                              sharedPreferences.setInt('typeId', widget.typeid);
-                              try{
-                                UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-                                    email: lemail, password: lpass);
-                                //ConfirmationResult userCredentialphone = await _auth.signInWithPhoneNumber(phone);
-                                _firestore.collection('users').doc(_auth.currentUser!.uid).get().
-                                then((value) => userCredential.user!.updateDisplayName(value['name']));
-                                User? user = FirebaseAuth.instance.currentUser;
-                                if (userCredential.user!.emailVerified == false) {
-                                  //await user!.sendEmailVerification();
-                                  _showErrorDialog(
-                                      'You have to check your email..!');
-                                }else{
-                                  print("Login Sucessfull");
-                                  SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-                                  sharedPreferences.setString('email', lemail);
-                                  Navigator.of(context).pushAndRemoveUntil(
-                                      MaterialPageRoute(
-                                          builder: (BuildContext context) =>
-                                              NavBar()),
-                                          (Route<dynamic> route) => false);
-                                }
 
-                              }on FirebaseAuthException catch (e) {
-                                if (e.code == 'user-not-found') {
-                                  CircularProgressIndicator();
-                                  _showErrorDialog('No user found for that email.');
-                                } else if (e.code == 'wrong-password') {
-                                  _showErrorDialog('The password is incorrect.');
-                                }
-                              }
+                             if(widget.typeid == userMap!['typeid']){
+                               loginformkey.currentState!.save();
+                               SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+                               sharedPreferences.setInt('typeId', widget.typeid);
+                               try{
+                                 UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+                                     email: lemail, password: lpass);
+                                 //ConfirmationResult userCredentialphone = await _auth.signInWithPhoneNumber(phone);
+                                 _firestore.collection('users').doc(_auth.currentUser!.uid).get().
+                                 then((value) => userCredential.user!.updateDisplayName(value['name']));
+                                 User? user = FirebaseAuth.instance.currentUser;
+                                 if (userCredential.user!.emailVerified == false) {
+                                   //await user!.sendEmailVerification();
+                                   _showErrorDialog(
+                                       'You have to check your email..!');
+                                 }else{
+                                   print("Login Sucessfull");
+                                   SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+                                   sharedPreferences.setString('email', lemail);
+                                   Navigator.of(context).pushAndRemoveUntil(
+                                       MaterialPageRoute(
+                                           builder: (BuildContext context) =>
+                                               NavBar()),
+                                           (Route<dynamic> route) => false);
+                                 }
 
+                               }on FirebaseAuthException catch (e) {
+                                 if (e.code == 'user-not-found') {
+                                   CircularProgressIndicator();
+                                   _showErrorDialog('No user found for that email.');
+                                 } else if (e.code == 'wrong-password') {
+                                   _showErrorDialog('The password is incorrect.');
+                                 }
+                               }
+
+                             }else{
+                               _showErrorDialog('This email is not a ${widget.text}');
+                             }
                             }
                           },
                         ),
